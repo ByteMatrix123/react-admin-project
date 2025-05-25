@@ -86,12 +86,36 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/health", response_model=HealthCheck)
 async def health_check():
     """Health check endpoint."""
+    from app.core.database import get_db_session
+    from app.core.redis import get_redis
+
+    # Check database connection
+    db_status = "disconnected"
+    try:
+        async with get_db_session() as db:
+            await db.execute("SELECT 1")
+        db_status = "connected"
+    except Exception as e:
+        logger.error(f"Database health check failed: {e}")
+
+    # Check Redis connection
+    redis_status = "disconnected"
+    try:
+        redis = await get_redis()
+        if redis:
+            await redis.ping()
+            redis_status = "connected"
+    except Exception as e:
+        logger.error(f"Redis health check failed: {e}")
+
+    overall_status = "healthy" if db_status == "connected" and redis_status == "connected" else "unhealthy"
+
     return HealthCheck(
-        status="healthy",
+        status=overall_status,
         timestamp=datetime.utcnow().isoformat(),
         version=settings.app_version,
-        database="connected",  # TODO: Add actual database check
-        redis="connected",  # TODO: Add actual Redis check
+        database=db_status,
+        redis=redis_status,
     )
 
 
@@ -112,13 +136,15 @@ async def root():
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 
 # Import additional routers
+from app.api.files import router as files_router
+from app.api.permissions import router as permissions_router
+from app.api.roles import router as roles_router
 from app.api.users import router as users_router
 
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
-
-# TODO: Add more routers
-# app.include_router(roles_router, prefix="/api/roles", tags=["Roles"])
-# app.include_router(permissions_router, prefix="/api/permissions", tags=["Permissions"])
+app.include_router(roles_router, prefix="/api/roles", tags=["Roles"])
+app.include_router(permissions_router, prefix="/api/permissions", tags=["Permissions"])
+app.include_router(files_router, prefix="/api/files", tags=["Files"])
 
 
 if __name__ == "__main__":
