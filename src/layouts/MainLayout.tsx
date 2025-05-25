@@ -50,6 +50,12 @@ const menuItems: MenuItem[] = [
     path: '/users',
   },
   {
+    key: '/permissions',
+    label: '权限管理',
+    icon: <SettingOutlined />,
+    path: '/permissions',
+  },
+  {
     key: '/products',
     label: '产品管理',
     icon: <ShoppingOutlined />,

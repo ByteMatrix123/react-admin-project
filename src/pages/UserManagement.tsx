@@ -31,6 +31,7 @@ import { useUserList, useDeleteUser, useResetPassword } from '../hooks/useUserQu
 import { departments } from '../services/mockData';
 import UserForm from '../components/UserForm';
 import UserDetail from '../components/UserDetail';
+import UserRoleAssignment from '../components/UserRoleAssignment';
 import type { User } from '../types/user';
 
 const { Search } = Input;
@@ -42,8 +43,10 @@ const UserManagement: React.FC = () => {
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDetailVisible, setIsDetailVisible] = useState(false);
+  const [isRoleModalVisible, setIsRoleModalVisible] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [viewingUser, setViewingUser] = useState<User | null>(null);
+  const [roleAssignUser, setRoleAssignUser] = useState<User | null>(null);
 
   // API hooks
   const { data: userListData, isLoading, refetch } = useUserList(searchParams);
@@ -167,6 +170,14 @@ const UserManagement: React.FC = () => {
               onClick={() => handleEditUser(record)}
             />
           </Tooltip>
+          <Tooltip title="分配角色">
+            <Button
+              type="text"
+              size="small"
+              icon={<KeyOutlined />}
+              onClick={() => handleAssignRole(record)}
+            />
+          </Tooltip>
           <Tooltip title="重置密码">
             <Popconfirm
               title="确定要重置该用户的密码吗？"
@@ -251,6 +262,21 @@ const UserManagement: React.FC = () => {
   const handleFormSuccess = () => {
     setIsModalVisible(false);
     setEditingUser(null);
+    refetch();
+  };
+
+  // 处理角色分配
+  const handleAssignRole = (user: User) => {
+    setRoleAssignUser(user);
+    setIsRoleModalVisible(true);
+  };
+
+  // 处理角色分配提交
+  const handleRoleAssignSubmit = async (userId: string, roleIds: string[]) => {
+    // 这里应该调用角色分配API
+    console.log('分配角色:', userId, roleIds);
+    setIsRoleModalVisible(false);
+    setRoleAssignUser(null);
     refetch();
   };
 
@@ -392,6 +418,17 @@ const UserManagement: React.FC = () => {
           />
         )}
       </Drawer>
+
+      {/* 角色分配模态框 */}
+      <UserRoleAssignment
+        visible={isRoleModalVisible}
+        user={roleAssignUser}
+        onCancel={() => {
+          setIsRoleModalVisible(false);
+          setRoleAssignUser(null);
+        }}
+        onSubmit={handleRoleAssignSubmit}
+      />
     </div>
   );
 };
