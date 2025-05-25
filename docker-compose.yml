@@ -63,6 +63,21 @@ services:
       - enterprise_network
     command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
+  # Frontend (React)
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: enterprise_frontend
+    ports:
+      - "3000:3000"
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    networks:
+      - enterprise_network
+    command: npm run dev
+
   # Nginx Reverse Proxy
   nginx:
     image: nginx:alpine
@@ -74,6 +89,7 @@ services:
       - ./nginx/default.conf:/etc/nginx/conf.d/default.conf
     depends_on:
       - backend
+      - frontend
     networks:
       - enterprise_network
 

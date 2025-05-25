@@ -25,7 +25,7 @@ class ErrorResponse(BaseModel):
 
 class PaginationInfo(BaseModel):
     """Pagination information."""
-    
+
     page: int = Field(ge=1)
     page_size: int = Field(ge=1, le=100)
     total: int
@@ -48,7 +48,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
         total_pages = (total + size - 1) // size  # Ceiling division
         has_next = page < total_pages
         has_prev = page > 1
-        
+
         pagination = PaginationInfo(
             page=page,
             page_size=size,
@@ -57,7 +57,7 @@ class PaginatedResponse(BaseModel, Generic[T]):
             has_next=has_next,
             has_prev=has_prev
         )
-        
+
         return cls(items=items, pagination=pagination)
 
 

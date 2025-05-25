@@ -96,7 +96,7 @@ export const useLogout = () => {
 // 获取当前用户信息
 export const useCurrentUser = () => {
   const { isAuthenticated } = useAuthStore();
-  
+
   return useQuery({
     queryKey: authQueryKeys.currentUser(),
     queryFn: AuthService.getCurrentUser,
@@ -199,7 +199,7 @@ export const useCheckUsernameAvailable = () => {
   return useMutation({
     mutationFn: async (username: string) => {
       const response = await AuthService.checkUsernameAvailable(username);
-      return response;
+        return response;
     },
     onError: (error: Error) => {
       console.error('检查用户名可用性失败:', error);

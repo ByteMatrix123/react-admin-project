@@ -8,6 +8,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from app.core.deps import get_current_user, get_db
 from app.models.user import User
 from app.schemas.auth import (
+    AuthUser,
     LoginResponse,
     PasswordReset,
     PasswordResetRequest,
@@ -114,19 +115,7 @@ async def reset_password(reset_data: PasswordReset, db: AsyncSession = Depends(g
     return Message(message="Password reset successfully")
 
 
-@router.get("/me", response_model=dict)
+@router.get("/me", response_model=AuthUser)
 async def get_current_user_info(current_user: User = Depends(get_current_user)):
     """Get current user information."""
-    return {
-        "id": current_user.id,
-        "username": current_user.username,
-        "email": current_user.email,
-        "full_name": current_user.full_name,
-        "is_active": current_user.is_active,
-        "is_verified": current_user.is_verified,
-        "is_superuser": current_user.is_superuser,
-        "roles": [
-            {"id": role.id, "name": role.name, "display_name": role.display_name}
-            for role in current_user.roles
-        ],
-    }
+    return AuthUser.from_user(current_user)

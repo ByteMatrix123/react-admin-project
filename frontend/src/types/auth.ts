@@ -17,25 +17,60 @@ export interface RegisterRequest {
 }
 
 export interface AuthUser {
+  // Basic Information
   id: number;
   username: string;
   email: string;
+  
+  // Profile Information
+  full_name?: string;
   first_name?: string;
   last_name?: string;
-  full_name?: string;
   phone?: string;
   avatar_url?: string;
+  
+  // Work Information
   department?: string;
   position?: string;
+  employee_id?: string;
+  
+  // Personal Information
   birthday?: string;
-  work_location?: string;
+  location?: string;
   bio?: string;
+  
+  // Status and Settings
   is_active: boolean;
   is_verified: boolean;
   is_superuser: boolean;
-  last_login_at?: string;
+  
+  // Authentication
+  last_login?: string;
+  password_changed_at?: string;
+  
+  // Settings
+  language: string;
+  timezone: string;
+  theme: string;
+  
+  // Notification Settings
+  email_notifications: boolean;
+  browser_notifications: boolean;
+  mobile_notifications: boolean;
+  
+  // Privacy Settings
+  show_online_status: boolean;
+  allow_data_collection: boolean;
+  
+  // Security Settings
+  two_factor_enabled: boolean;
+  session_timeout: number;
+  
+  // Timestamps
   created_at: string;
   updated_at: string;
+  
+  // Relationships
   roles: Role[];
   permissions: string[];
 }
