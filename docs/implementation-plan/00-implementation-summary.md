@@ -110,7 +110,7 @@
 **目标**: 建立后端基础架构和开发环境
 
 #### Week 1: 环境搭建
-- [ ] 开发环境配置 (Docker, PostgreSQL, Redis)
+- [ ] 开发环境配置 (Docker, PostgreSQL, Redis, uv)
 - [ ] 后端项目初始化 (FastAPI, SQLAlchemy)
 - [ ] 数据库设计和迁移脚本
 - [ ] 基础 API 框架搭建

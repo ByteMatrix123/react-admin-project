@@ -147,7 +147,7 @@ const Login: React.FC = () => {
 
         <div style={{ marginTop: 24, textAlign: 'center' }}>
           <Text type="secondary" style={{ fontSize: 12 }}>
-            演示账户：admin / 123456
+            演示账户：admin / Admin123!
           </Text>
         </div>
       </Card>

@@ -18,18 +18,24 @@ export interface User {
 export interface CreateUserRequest {
   username: string;
   email: string;
+  password: string;
   phone?: string;
   realName: string;
   department: string;
   position: string;
-  role: 'admin' | 'manager' | 'user';
-  permissions: string[];
+  employeeId?: string;
+  role?: 'admin' | 'manager' | 'user';
+  permissions?: string[];
 }
 
+export interface UserCreateRequest extends CreateUserRequest {}
+
 export interface UpdateUserRequest extends Partial<CreateUserRequest> {
-  id: string;
+  id?: string;
   status?: 'active' | 'inactive' | 'pending';
 }
+
+export interface UserUpdateRequest extends UpdateUserRequest {}
 
 export interface UserListParams {
   page: number;

@@ -18,6 +18,7 @@ import { Route as ProfileImport } from './routes/profile'
 import { Route as PermissionsImport } from './routes/permissions'
 import { Route as LoginImport } from './routes/login'
 import { Route as DashboardImport } from './routes/dashboard'
+import { Route as ApiTestImport } from './routes/api-test'
 import { Route as IndexImport } from './routes/index'
 
 // Create/Update Routes
@@ -64,6 +65,12 @@ const DashboardRoute = DashboardImport.update({
   getParentRoute: () => rootRoute,
 } as any)
 
+const ApiTestRoute = ApiTestImport.update({
+  id: '/api-test',
+  path: '/api-test',
+  getParentRoute: () => rootRoute,
+} as any)
+
 const IndexRoute = IndexImport.update({
   id: '/',
   path: '/',
@@ -79,6 +86,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexImport
+      parentRoute: typeof rootRoute
+    }
+    '/api-test': {
+      id: '/api-test'
+      path: '/api-test'
+      fullPath: '/api-test'
+      preLoaderRoute: typeof ApiTestImport
       parentRoute: typeof rootRoute
     }
     '/dashboard': {
@@ -137,6 +151,7 @@ declare module '@tanstack/react-router' {
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/api-test': typeof ApiTestRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/permissions': typeof PermissionsRoute
@@ -148,6 +163,7 @@ export interface FileRoutesByFullPath {
 
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/api-test': typeof ApiTestRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/permissions': typeof PermissionsRoute
@@ -160,6 +176,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRoute
   '/': typeof IndexRoute
+  '/api-test': typeof ApiTestRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
   '/permissions': typeof PermissionsRoute
@@ -173,6 +190,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/api-test'
     | '/dashboard'
     | '/login'
     | '/permissions'
@@ -183,6 +201,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/api-test'
     | '/dashboard'
     | '/login'
     | '/permissions'
@@ -193,6 +212,7 @@ export interface FileRouteTypes {
   id:
     | '__root__'
     | '/'
+    | '/api-test'
     | '/dashboard'
     | '/login'
     | '/permissions'
@@ -205,6 +225,7 @@ export interface FileRouteTypes {
 
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  ApiTestRoute: typeof ApiTestRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
   PermissionsRoute: typeof PermissionsRoute
@@ -216,6 +237,7 @@ export interface RootRouteChildren {
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  ApiTestRoute: ApiTestRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
   PermissionsRoute: PermissionsRoute,
@@ -236,6 +258,7 @@ export const routeTree = rootRoute
       "filePath": "__root.tsx",
       "children": [
         "/",
+        "/api-test",
         "/dashboard",
         "/login",
         "/permissions",
@@ -247,6 +270,9 @@ export const routeTree = rootRoute
     },
     "/": {
       "filePath": "index.tsx"
+    },
+    "/api-test": {
+      "filePath": "api-test.tsx"
     },
     "/dashboard": {
       "filePath": "dashboard.tsx"

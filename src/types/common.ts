@@ -17,6 +17,14 @@ export interface PaginationResponse<T> {
   pageSize: number;
 }
 
+export interface PaginatedResponse<T> {
+  items: T[];
+  total: number;
+  page: number;
+  size: number;
+  pages: number;
+}
+
 export interface MenuItem {
   key: string;
   label: string;

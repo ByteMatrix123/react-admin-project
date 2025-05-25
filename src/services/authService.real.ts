@@ -156,20 +156,20 @@ export const authService = {
         };
       }
 
-      return {
-        code: response.code,
-        message: response.message,
-        success: false,
-        data: null,
-      };
-    } catch (error: any) {
-      return {
-        code: 500,
-        message: error.message || '注册失败',
-        success: false,
-        data: null,
-      };
-    }
+             return {
+         code: response.code,
+         message: response.message,
+         success: false,
+         data: null,
+       };
+     } catch (error: any) {
+       return {
+         code: 500,
+         message: error.message || '注册失败',
+         success: false,
+         data: null,
+       };
+     }
   },
 
   // 刷新token
@@ -197,12 +197,7 @@ export const authService = {
         };
       }
 
-      return {
-        code: response.code,
-        message: response.message,
-        success: false,
-        data: null,
-      };
+      return response as ApiResponse<{ access_token: string; refresh_token: string } | null>;
     } catch (error: any) {
       return {
         code: 500,
@@ -270,20 +265,20 @@ export const authService = {
         };
       }
 
-      return {
-        code: response.code,
-        message: response.message,
-        success: false,
-        data: null,
-      };
-    } catch (error: any) {
-      return {
-        code: 500,
-        message: error.message || '获取用户信息失败',
-        success: false,
-        data: null,
-      };
-    }
+             return {
+         code: response.code,
+         message: response.message,
+         success: false,
+         data: null,
+       };
+     } catch (error: any) {
+       return {
+         code: 500,
+         message: error.message || '获取用户信息失败',
+         success: false,
+         data: null,
+       };
+     }
   },
 
   // 忘记密码
