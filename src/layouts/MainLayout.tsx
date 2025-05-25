@@ -25,6 +25,8 @@ import {
 } from '@ant-design/icons';
 import { Link, useLocation } from '@tanstack/react-router';
 import { useAppStore } from '../stores/appStore';
+import { useAuthStore } from '../stores/authStore';
+import { useLogout } from '../hooks/useAuthQuery';
 import type { MenuItem } from '../types/common';
 
 const { Header, Sider, Content } = Layout;
@@ -93,15 +95,25 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
   const location = useLocation();
   const {
     collapsed,
-    currentUser,
     breadcrumbs,
     toggleCollapsed,
-    logout,
   } = useAppStore();
+  
+  const { user: currentUser } = useAuthStore();
+  const logoutMutation = useLogout();
 
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
+
+  // 处理登出
+  const handleLogout = async () => {
+    try {
+      await logoutMutation.mutateAsync();
+    } catch (error) {
+      // 错误处理已在mutation中完成
+    }
+  };
 
   // 用户下拉菜单
   const userMenuItems = [
@@ -122,7 +134,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '退出登录',
-      onClick: logout,
+      onClick: handleLogout,
     },
   ];
 
