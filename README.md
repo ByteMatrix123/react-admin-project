@@ -218,6 +218,26 @@ npm run preview
 3. 提交代码
 4. 创建 Pull Request
 
+## 📋 实施计划
+
+### 🚀 前后端分离改造方案
+本项目提供了完整的前后端分离改造实施计划，包含详细的技术方案和实施步骤：
+
+- **[📖 实施计划总览](./docs/implementation-plan/00-implementation-summary.md)** - 完整项目规划和时间线
+- **[📚 详细实施文档](./docs/implementation-plan/README.md)** - 8个阶段的详细实施方案
+
+### 🎯 改造目标
+- **后端架构**: FastAPI + PostgreSQL + Redis 完整后端系统
+- **API 设计**: RESTful API 和 OpenAPI 文档
+- **安全策略**: JWT 认证、RBAC 权限、数据加密
+- **部署方案**: Docker 容器化、Kubernetes 编排、CI/CD 流水线
+- **监控运维**: Prometheus 监控、日志收集、告警系统
+
+### 📊 实施时间线
+- **第一阶段** (3周): 基础架构搭建
+- **第二阶段** (4周): 功能迁移和优化  
+- **第三阶段** (3周): 部署和运维
+
 ## 📄 许可证
 
 MIT License
@@ -225,3 +245,9 @@ MIT License
 ---
 
 这个项目展示了如何构建一个现代化的企业后台管理系统，包含了完整的用户管理功能和最佳实践。可以作为其他管理系统的基础框架进行扩展。
+
+**🔗 更多资源**:
+- [功能演示文档](./FEATURE_SUMMARY.md)
+- [认证系统演示](./AUTH_DEMO.md)
+- [权限管理演示](./RBAC_DEMO.md)
+- [个人资料和设置演示](./PROFILE_SETTINGS_DEMO.md)
