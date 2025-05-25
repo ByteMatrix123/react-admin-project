@@ -115,17 +115,25 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
     }
   };
 
+  // 处理菜单点击
+  const handleMenuClick = ({ key }: { key: string }) => {
+    if (key === 'logout') {
+      handleLogout();
+    }
+    // 其他菜单项通过 Link 组件处理导航
+  };
+
   // 用户下拉菜单
   const userMenuItems = [
     {
       key: 'profile',
       icon: <UserOutlined />,
-      label: '个人资料',
+      label: <Link to="/profile">个人资料</Link>,
     },
     {
       key: 'settings',
       icon: <SettingOutlined />,
-      label: '系统设置',
+      label: <Link to="/settings">系统设置</Link>,
     },
     {
       type: 'divider' as const,
@@ -134,7 +142,6 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
       key: 'logout',
       icon: <LogoutOutlined />,
       label: '退出登录',
-      onClick: handleLogout,
     },
   ];
 
@@ -272,7 +279,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
             </Badge>
             
             <Dropdown
-              menu={{ items: userMenuItems }}
+              menu={{ items: userMenuItems, onClick: handleMenuClick }}
               placement="bottomRight"
               arrow
             >

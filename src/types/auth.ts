@@ -21,6 +21,9 @@ export interface AuthUser {
   email: string;
   realName: string;
   avatar?: string;
+  phone?: string;
+  department: string;
+  position: string;
   role: 'admin' | 'manager' | 'user';
   status: 'active' | 'inactive' | 'pending';
   permissions: string[];
