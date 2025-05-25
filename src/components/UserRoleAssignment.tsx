@@ -19,9 +19,9 @@ import {
 
   CheckCircleOutlined,
 } from '@ant-design/icons';
-import { useRoles } from '../hooks/usePermissionQuery';
+import { useRoles } from '../hooks/useRoleQuery';
 import type { User } from '../types/user';
-import type { Role } from '../types/permission';
+import type { Role } from '../types/auth';
 
 const { Text, Title } = Typography;
 const { Option } = Select;
@@ -30,7 +30,7 @@ interface UserRoleAssignmentProps {
   visible: boolean;
   user: User | null;
   onCancel: () => void;
-  onSubmit: (userId: string, roleIds: string[]) => Promise<void>;
+  onSubmit: (userId: number, roleIds: number[]) => Promise<void>;
   loading?: boolean;
 }
 
@@ -46,17 +46,19 @@ const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
   const [selectedRoles, setSelectedRoles] = useState<Role[]>([]);
 
   // 处理角色选择
-  const handleRoleChange = (roleIds: string[]) => {
-    const selected = roles?.filter(role => roleIds.includes(role.id)) || [];
+  const handleRoleChange = (roleIds: (string | number)[]) => {
+    const numericRoleIds = roleIds.map(id => typeof id === 'string' ? parseInt(id) : id);
+    const selected = roles?.filter(role => numericRoleIds.includes(role.id)) || [];
     setSelectedRoles(selected);
   };
 
   // 提交表单
-  const handleSubmit = async (values: { roleIds: string[] }) => {
+  const handleSubmit = async (values: { roleIds: (string | number)[] }) => {
     if (!user) return;
     
     try {
-      await onSubmit(user.id, values.roleIds);
+      const numericRoleIds = values.roleIds.map(id => typeof id === 'string' ? parseInt(id) : id);
+      await onSubmit(user.id, numericRoleIds);
       form.resetFields();
       setSelectedRoles([]);
     } catch (error) {
@@ -75,9 +77,7 @@ const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
   // 获取当前用户角色
   const getCurrentUserRoles = () => {
     if (!user || !roles) return [];
-    // 这里应该从用户数据中获取当前角色
-    // 简化实现，假设用户有一个roles字段
-    return roles.filter(role => role.code === user.role);
+    return user.roles || [];
   };
 
   const currentRoles = getCurrentUserRoles();
@@ -87,7 +87,7 @@ const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
       title={
         <Space>
           <UserOutlined />
-          <span>为用户 "{user?.realName}" 分配角色</span>
+          <span>为用户 "{user?.full_name}" 分配角色</span>
         </Space>
       }
       open={visible}
@@ -100,9 +100,9 @@ const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
           {/* 用户信息 */}
           <div style={{ marginBottom: 24, padding: 16, backgroundColor: '#f6f8fa', borderRadius: 8 }}>
             <Space>
-              <Avatar size={48} src={user.avatar} icon={<UserOutlined />} />
+              <Avatar size={48} src={user.avatar_url} icon={<UserOutlined />} />
               <div>
-                <Title level={5} style={{ margin: 0 }}>{user.realName}</Title>
+                <Title level={5} style={{ margin: 0 }}>{user.full_name}</Title>
                 <Text type="secondary">{user.email}</Text>
                 <br />
                 <Text type="secondary">{user.department} - {user.position}</Text>
@@ -151,14 +151,14 @@ const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
                 style={{ width: '100%' }}
               >
                 {roles?.map(role => (
-                  <Option key={role.id} value={role.id} disabled={!role.isActive}>
+                  <Option key={role.id} value={role.id} disabled={!role.is_active}>
                     <Space>
                       <Tag color={getRoleLevelColor(role.level)}>
                         {role.level}
                       </Tag>
-                      <span>{role.name}</span>
-                      {role.isSystem && <Tag color="blue">系统</Tag>}
-                      {!role.isActive && <Tag color="red">禁用</Tag>}
+                      <span>{role.display_name}</span>
+                      {role.is_system && <Tag color="blue">系统</Tag>}
+                      {!role.is_active && <Tag color="red">禁用</Tag>}
                     </Space>
                   </Option>
                 ))}
@@ -182,8 +182,8 @@ const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
                         }
                         title={
                           <Space>
-                            <Text strong>{role.name}</Text>
-                            {role.isSystem && <Tag color="blue">系统</Tag>}
+                            <Text strong>{role.display_name}</Text>
+                            {role.is_system && <Tag color="blue">系统</Tag>}
                           </Space>
                         }
                         description={
@@ -191,8 +191,7 @@ const UserRoleAssignment: React.FC<UserRoleAssignmentProps> = ({
                             <Text type="secondary">{role.description}</Text>
                             <br />
                             <Text type="secondary" style={{ fontSize: 12 }}>
-                              权限数量: {role.permissions.length} | 
-                              用户数量: {role.userCount}
+                              角色代码: {role.name}
                             </Text>
                           </div>
                         }

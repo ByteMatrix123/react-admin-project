@@ -1,13 +1,13 @@
-import React from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { message } from 'antd';
-import { authService } from '../services/authService';
+import { AuthService } from '../services/authService';
 import { useAuthStore } from '../stores/authStore';
 import type { 
   LoginRequest, 
   RegisterRequest, 
-  PasswordResetRequest,
-  PasswordChangeRequest 
+  ChangePasswordRequest,
+  ForgotPasswordRequest,
+  ResetPasswordRequest
 } from '../types/auth';
 
 // Query Keys
@@ -19,22 +19,20 @@ export const authQueryKeys = {
 // 登录
 export const useLogin = () => {
   const { setAuth, setLoading, setError } = useAuthStore();
+  const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: async (credentials: LoginRequest) => {
       setLoading(true);
       setError(null);
       
-      const response = await authService.login(credentials);
+      const response = await AuthService.login(credentials);
       
-      if (response.success && response.data) {
-        return response.data;
-      } else {
-        throw new Error(response.message);
-      }
+      setAuth(response.user, response.access_token, response.refresh_token);
+      queryClient.setQueryData(authQueryKeys.currentUser(), response.user);
+      return response;
     },
-    onSuccess: (data) => {
-      setAuth(data.user, data.token, data.refreshToken);
+    onSuccess: () => {
       setLoading(false);
       message.success('登录成功');
     },
@@ -55,18 +53,14 @@ export const useRegister = () => {
       setLoading(true);
       setError(null);
       
-      const response = await authService.register(userData);
+      const response = await AuthService.register(userData);
       
-      if (response.success && response.data) {
-        return response.data;
+      if (response.verification_required) {
+        message.success('注册成功，请查收验证邮件');
       } else {
-        throw new Error(response.message);
+        message.success('注册成功');
       }
-    },
-    onSuccess: () => {
-      // 注册成功后不自动登录，因为需要审核
-      setLoading(false);
-      message.success('注册成功，请等待管理员审核');
+      return response;
     },
     onError: (error: Error) => {
       setError(error.message);
@@ -84,65 +78,32 @@ export const useLogout = () => {
   return useMutation({
     mutationFn: async () => {
       setLoading(true);
-      const response = await authService.logout();
+      await AuthService.logout();
       
-      if (response.success) {
-        return response;
-      } else {
-        throw new Error(response.message);
-      }
-    },
-    onSuccess: () => {
       clearAuth();
-      setLoading(false);
-      
-      // 清除所有查询缓存
       queryClient.clear();
-      
-      message.success('已安全退出');
+      message.success('登出成功');
     },
-    onError: (error: Error) => {
+    onError: () => {
+      clearAuth();
+      queryClient.clear();
+      message.warning('登出时发生错误，但已清除本地状态');
       setLoading(false);
-      message.error(error.message || '退出失败');
     },
   });
 };
 
 // 获取当前用户信息
 export const useCurrentUser = () => {
-  const { token, setUser, setError } = useAuthStore();
-
-  const query = useQuery({
+  const { isAuthenticated } = useAuthStore();
+  
+  return useQuery({
     queryKey: authQueryKeys.currentUser(),
-    queryFn: async () => {
-      if (!token) {
-        throw new Error('未登录');
-      }
-      
-      const response = await authService.getCurrentUser(token);
-      
-      if (response.success && response.data) {
-        return response.data;
-      } else {
-        throw new Error(response.message);
-      }
-    },
-    enabled: !!token,
-    staleTime: 5 * 60 * 1000, // 5分钟
+    queryFn: AuthService.getCurrentUser,
+    enabled: isAuthenticated,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
   });
-
-  // 处理成功和错误状态
-  React.useEffect(() => {
-    if (query.data) {
-      setUser(query.data);
-      setError(null);
-    }
-    if (query.error) {
-      setError(query.error.message);
-    }
-  }, [query.data, query.error, setUser, setError]);
-
-  return query;
 };
 
 // 刷新token
@@ -155,42 +116,15 @@ export const useRefreshToken = () => {
         throw new Error('Refresh token不存在');
       }
       
-      const response = await authService.refreshToken(refreshToken);
-      
-      if (response.success && response.data) {
-        return response.data;
-      } else {
-        throw new Error(response.message);
-      }
+      const response = await AuthService.refreshToken(refreshToken);
+      return response;
     },
     onSuccess: (data) => {
-      updateToken(data.token, data.refreshToken);
+      updateToken(data.access_token);
     },
     onError: () => {
-      // Token刷新失败，清除认证状态
       clearAuth();
       message.error('登录已过期，请重新登录');
-    },
-  });
-};
-
-// 忘记密码
-export const useForgotPassword = () => {
-  return useMutation({
-    mutationFn: async (data: PasswordResetRequest) => {
-      const response = await authService.forgotPassword(data);
-      
-      if (response.success) {
-        return response;
-      } else {
-        throw new Error(response.message);
-      }
-    },
-    onSuccess: () => {
-      message.success('密码重置邮件已发送，请查收邮箱');
-    },
-    onError: (error: Error) => {
-      message.error(error.message || '发送失败');
     },
   });
 };
@@ -198,20 +132,90 @@ export const useForgotPassword = () => {
 // 修改密码
 export const useChangePassword = () => {
   return useMutation({
-    mutationFn: async (data: PasswordChangeRequest) => {
-      const response = await authService.changePassword(data);
-      
-      if (response.success) {
-        return response;
-      } else {
-        throw new Error(response.message);
-      }
-    },
-    onSuccess: () => {
+    mutationFn: async (data: ChangePasswordRequest) => {
+      await AuthService.changePassword(data);
       message.success('密码修改成功');
     },
     onError: (error: Error) => {
       message.error(error.message || '密码修改失败');
+    },
+  });
+};
+
+// 忘记密码
+export const useForgotPassword = () => {
+  return useMutation({
+    mutationFn: async (data: ForgotPasswordRequest) => {
+      await AuthService.forgotPassword(data);
+      message.success('密码重置邮件已发送，请查收');
+    },
+    onError: (error: Error) => {
+      message.error(error.message || '发送重置邮件失败');
+    },
+  });
+};
+
+// 重置密码
+export const useResetPassword = () => {
+  return useMutation({
+    mutationFn: async (data: ResetPasswordRequest) => {
+      await AuthService.resetPassword(data);
+      message.success('密码重置成功，请使用新密码登录');
+    },
+    onError: (error: Error) => {
+      message.error(error.message || '密码重置失败');
+    },
+  });
+};
+
+// 验证邮箱
+export const useVerifyEmail = () => {
+  return useMutation({
+    mutationFn: async (token: string) => {
+      await AuthService.verifyEmail(token);
+      message.success('邮箱验证成功');
+    },
+    onError: (error: Error) => {
+      message.error(error.message || '邮箱验证失败');
+    },
+  });
+};
+
+// 重发验证邮件
+export const useResendVerificationEmail = () => {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      await AuthService.resendVerificationEmail(email);
+      message.success('验证邮件已重新发送，请查收');
+    },
+    onError: (error: Error) => {
+      message.error(error.message || '发送验证邮件失败');
+    },
+  });
+};
+
+// 检查用户名可用性
+export const useCheckUsernameAvailable = () => {
+  return useMutation({
+    mutationFn: async (username: string) => {
+      const response = await AuthService.checkUsernameAvailable(username);
+      return response;
+    },
+    onError: (error: Error) => {
+      console.error('检查用户名可用性失败:', error);
+    },
+  });
+};
+
+// 检查邮箱可用性
+export const useCheckEmailAvailable = () => {
+  return useMutation({
+    mutationFn: async (email: string) => {
+      const response = await AuthService.checkEmailAvailable(email);
+      return response;
+    },
+    onError: (error: Error) => {
+      console.error('检查邮箱可用性失败:', error);
     },
   });
 }; 

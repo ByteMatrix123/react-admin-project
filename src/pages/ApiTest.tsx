@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Card, Button, Input, Form, Space, Typography, Alert, Divider } from 'antd';
-import { authService } from '../services/authService';
+import { AuthService } from '../services/authService';
 
 const { Title, Text } = Typography;
 
@@ -13,7 +13,7 @@ const ApiTest: React.FC = () => {
   const testLogin = async (values: { username: string; password: string }) => {
     setLoading(true);
     try {
-      const result = await authService.login(values);
+      const result = await AuthService.login(values);
       setLoginResult(result);
       console.log('Login result:', result);
     } catch (error: any) {
@@ -32,7 +32,7 @@ const ApiTest: React.FC = () => {
         setUserResult({ success: false, message: '请先登录' });
         return;
       }
-      const result = await authService.getCurrentUser(token);
+      const result = await AuthService.getCurrentUser();
       setUserResult(result);
       console.log('User result:', result);
     } catch (error: any) {
@@ -46,7 +46,7 @@ const ApiTest: React.FC = () => {
   const testLogout = async () => {
     setLoading(true);
     try {
-      const result = await authService.logout();
+      const result = await AuthService.logout();
       console.log('Logout result:', result);
       setLoginResult(null);
       setUserResult(null);

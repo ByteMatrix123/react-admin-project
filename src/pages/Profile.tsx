@@ -37,7 +37,7 @@ const { Option } = Select;
 const { TabPane } = Tabs;
 
 interface ProfileFormData {
-  realName: string;
+  full_name: string;
   email: string;
   phone?: string;
   department: string;
@@ -48,9 +48,9 @@ interface ProfileFormData {
 }
 
 interface PasswordFormData {
-  oldPassword: string;
-  newPassword: string;
-  confirmPassword: string;
+  current_password: string;
+  new_password: string;
+  confirm_password: string;
 }
 
 const Profile: React.FC = () => {
@@ -58,7 +58,7 @@ const Profile: React.FC = () => {
   const [profileForm] = Form.useForm();
   const [passwordForm] = Form.useForm();
   const [loading, setLoading] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState(user?.avatar);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar_url);
   
   const changePasswordMutation = useChangePassword();
 
@@ -102,12 +102,12 @@ const Profile: React.FC = () => {
       if (user) {
         const updatedUser = {
           ...user,
-          realName: values.realName,
+          full_name: values.full_name,
           email: values.email,
           phone: values.phone,
           department: values.department,
           position: values.position,
-          avatar: avatarUrl,
+          avatar_url: avatarUrl,
         };
         setUser(updatedUser);
       }
@@ -178,7 +178,7 @@ const Profile: React.FC = () => {
               </div>
               
               <Title level={4} style={{ margin: '8px 0' }}>
-                {user.realName}
+                {user.full_name}
               </Title>
               <Text type="secondary">{user.position}</Text>
               <br />
@@ -194,18 +194,16 @@ const Profile: React.FC = () => {
                 <div>
                   <Text strong>角色：</Text>
                   <Text>
-                    {user.role === 'admin' ? '管理员' : 
-                     user.role === 'manager' ? '经理' : '普通用户'}
+                    {user.is_superuser ? '管理员' : 
+                     user.roles.length > 0 && user.roles[0].name === 'manager' ? '经理' : '普通用户'}
                   </Text>
                 </div>
                 <div>
                   <Text strong>状态：</Text>
                   <Text style={{ 
-                    color: user.status === 'active' ? '#52c41a' : 
-                           user.status === 'pending' ? '#faad14' : '#ff4d4f' 
+                    color: user.is_active ? '#52c41a' : '#ff4d4f' 
                   }}>
-                    {user.status === 'active' ? '正常' : 
-                     user.status === 'pending' ? '待审核' : '已禁用'}
+                    {user.is_active ? '正常' : '已禁用'}
                   </Text>
                 </div>
               </Space>
@@ -222,7 +220,7 @@ const Profile: React.FC = () => {
                   layout="vertical"
                   onFinish={handleProfileSubmit}
                   initialValues={{
-                    realName: user.realName,
+                    full_name: user.full_name,
                     email: user.email,
                     phone: user.phone,
                     department: user.department,
@@ -232,7 +230,7 @@ const Profile: React.FC = () => {
                   <Row gutter={16}>
                     <Col span={12}>
                       <Form.Item
-                        name="realName"
+                        name="full_name"
                         label="真实姓名"
                         rules={[
                           { required: true, message: '请输入真实姓名' },

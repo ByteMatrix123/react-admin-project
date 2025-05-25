@@ -6,160 +6,181 @@ import {
   Button,
   Space,
   Card,
-  Typography,
 } from 'antd';
 import {
   UserOutlined,
   EditOutlined,
-  MailOutlined,
-  PhoneOutlined,
-  TeamOutlined,
-  ClockCircleOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
 import dayjs from 'dayjs';
 import type { User } from '../types/user';
 
-const { Title, Text } = Typography;
+
 
 interface UserDetailProps {
   user: User;
   onEdit?: () => void;
+  onDelete?: () => void;
 }
 
-const UserDetail: React.FC<UserDetailProps> = ({ user, onEdit }) => {
-  // 状态标签颜色映射
-  const statusColors = {
-    active: 'green',
-    inactive: 'red',
-    pending: 'orange',
+// 角色颜色映射
+const roleColors = {
+  admin: 'red',
+  manager: 'blue',
+  user: 'green',
+};
+
+// 角色文本映射
+const roleTexts = {
+  admin: '管理员',
+  manager: '经理',
+  user: '普通用户',
+};
+
+// 状态颜色映射
+const statusColors = {
+  active: 'green',
+  inactive: 'red',
+  pending: 'orange',
+};
+
+// 状态文本映射
+const statusTexts = {
+  active: '正常',
+  inactive: '已禁用',
+  pending: '待审核',
+};
+
+const UserDetail: React.FC<UserDetailProps> = ({ user, onEdit, onDelete }) => {
+  // 获取用户状态
+  const getUserStatus = () => {
+    if (!user.is_active) return 'inactive';
+    if (!user.is_verified) return 'pending';
+    return 'active';
   };
 
-  // 状态文本映射
-  const statusTexts = {
-    active: '正常',
-    inactive: '禁用',
-    pending: '待审核',
+  // 获取主要角色
+  const getPrimaryRole = () => {
+    if (user.is_superuser) return 'admin';
+    if (user.roles.length > 0) {
+      // 返回级别最高的角色
+      const sortedRoles = user.roles.sort((a, b) => a.level - b.level);
+      return sortedRoles[0].name;
+    }
+    return 'user';
   };
 
-  // 角色文本映射
-  const roleTexts = {
-    admin: '管理员',
-    manager: '经理',
-    user: '普通用户',
+  // 获取用户权限
+  const getUserPermissions = (): string[] => {
+    if (user.is_superuser) return ['*'];
+    
+    // 从角色中提取权限
+    const permissions: string[] = [];
+    user.roles.forEach(role => {
+      // 这里可以根据角色映射权限，暂时使用基础权限
+      if (role.name === 'admin') {
+        permissions.push('*');
+      } else if (role.name === 'manager') {
+        permissions.push('user:read', 'user:create', 'user:update');
+      } else {
+        permissions.push('user:read', 'profile:update');
+      }
+    });
+    
+    return [...new Set(permissions)]; // 去重
   };
 
-  // 角色颜色映射
-  const roleColors = {
-    admin: 'red',
-    manager: 'blue',
-    user: 'default',
-  };
+  const userStatus = getUserStatus();
+  const primaryRole = getPrimaryRole();
+  const userPermissions = getUserPermissions();
 
   return (
-    <div>
-      {/* 用户基本信息卡片 */}
-      <Card style={{ marginBottom: 16 }}>
-        <div style={{ textAlign: 'center', marginBottom: 24 }}>
+    <Card
+      title={
+        <Space>
           <Avatar
             size={80}
-            src={user.avatar}
+            src={user.avatar_url}
             icon={<UserOutlined />}
             style={{ marginBottom: 16 }}
           />
-          <Title level={4} style={{ margin: 0 }}>
-            {user.realName}
-          </Title>
-          <Text type="secondary">@{user.username}</Text>
-          <div style={{ marginTop: 8 }}>
-            <Space>
-              <Tag color={roleColors[user.role as keyof typeof roleColors]}>
-                {roleTexts[user.role as keyof typeof roleTexts]}
+          <div>
+            {user.full_name}
+            <div style={{ fontSize: 14, fontWeight: 'normal', color: '#666' }}>
+              <Tag color={roleColors[primaryRole as keyof typeof roleColors]}>
+                {roleTexts[primaryRole as keyof typeof roleTexts]}
               </Tag>
-              <Tag color={statusColors[user.status as keyof typeof statusColors]}>
-                {statusTexts[user.status as keyof typeof statusTexts]}
+              <Tag color={statusColors[userStatus as keyof typeof statusColors]}>
+                {statusTexts[userStatus as keyof typeof statusTexts]}
               </Tag>
-            </Space>
+            </div>
           </div>
-        </div>
-
-        {onEdit && (
-          <div style={{ textAlign: 'center' }}>
-            <Button
-              type="primary"
-              icon={<EditOutlined />}
-              onClick={onEdit}
-            >
-              编辑用户
+        </Space>
+      }
+      extra={
+        <Space>
+          {onEdit && (
+            <Button type="primary" icon={<EditOutlined />} onClick={onEdit}>
+              编辑
             </Button>
-          </div>
-        )}
-      </Card>
+          )}
+          {onDelete && (
+            <Button danger icon={<DeleteOutlined />} onClick={onDelete}>
+              删除
+            </Button>
+          )}
+        </Space>
+      }
+    >
+      <Descriptions column={2} bordered>
+        <Descriptions.Item label="用户名">{user.username}</Descriptions.Item>
+        <Descriptions.Item label="邮箱">{user.email}</Descriptions.Item>
+        <Descriptions.Item label="手机号">{user.phone}</Descriptions.Item>
+        <Descriptions.Item label="部门">{user.department}</Descriptions.Item>
+        <Descriptions.Item label="职位">{user.position}</Descriptions.Item>
+        <Descriptions.Item label="工作地点">{user.work_location || '-'}</Descriptions.Item>
+        <Descriptions.Item label="生日">{user.birthday || '-'}</Descriptions.Item>
+        <Descriptions.Item label="个人简介" span={2}>
+          {user.bio || '-'}
+        </Descriptions.Item>
+      </Descriptions>
 
-      {/* 详细信息 */}
-      <Card title="基本信息">
-        <Descriptions column={1} labelStyle={{ width: 100 }}>
-          <Descriptions.Item
-            label={<><MailOutlined /> 邮箱</>}
-          >
-            {user.email}
-          </Descriptions.Item>
-          <Descriptions.Item
-            label={<><PhoneOutlined /> 手机号</>}
-          >
-            {user.phone || '-'}
-          </Descriptions.Item>
-          <Descriptions.Item
-            label={<><TeamOutlined /> 部门</>}
-          >
-            {user.department}
-          </Descriptions.Item>
-          <Descriptions.Item label="职位">
-            {user.position}
-          </Descriptions.Item>
-          <Descriptions.Item label="用户ID">
-            <Text code>{user.id}</Text>
-          </Descriptions.Item>
-        </Descriptions>
-      </Card>
-
-      {/* 权限信息 */}
-      <Card title="权限信息" style={{ marginTop: 16 }}>
-        <div style={{ marginBottom: 16 }}>
-          <Text strong>拥有权限：</Text>
-        </div>
+      <Card title="角色信息" style={{ marginTop: 16 }}>
         <Space wrap>
-          {user.permissions.map(permission => (
-            <Tag key={permission} color="blue">
+          {user.roles.map(role => (
+            <Tag key={role.id} color="blue">
+              {role.display_name}
+            </Tag>
+          ))}
+        </Space>
+      </Card>
+
+      <Card title="权限信息" style={{ marginTop: 16 }}>
+        <Space wrap>
+          {userPermissions.map(permission => (
+            <Tag key={permission} color="green">
               {permission}
             </Tag>
           ))}
         </Space>
       </Card>
 
-      {/* 时间信息 */}
-      <Card title="时间信息" style={{ marginTop: 16 }}>
-        <Descriptions column={1} labelStyle={{ width: 100 }}>
-          <Descriptions.Item
-            label={<><ClockCircleOutlined /> 创建时间</>}
-          >
-            {dayjs(user.createdAt).format('YYYY-MM-DD HH:mm:ss')}
+      <Card title="系统信息" style={{ marginTop: 16 }}>
+        <Descriptions column={1} bordered>
+          <Descriptions.Item label="创建时间">
+            {dayjs(user.created_at).format('YYYY-MM-DD HH:mm:ss')}
           </Descriptions.Item>
-          <Descriptions.Item
-            label={<><ClockCircleOutlined /> 更新时间</>}
-          >
-            {dayjs(user.updatedAt).format('YYYY-MM-DD HH:mm:ss')}
+          <Descriptions.Item label="更新时间">
+            {dayjs(user.updated_at).format('YYYY-MM-DD HH:mm:ss')}
           </Descriptions.Item>
-          <Descriptions.Item
-            label={<><ClockCircleOutlined /> 最后登录</>}
-          >
-            {user.lastLoginAt 
-              ? dayjs(user.lastLoginAt).format('YYYY-MM-DD HH:mm:ss')
-              : '从未登录'
-            }
+          <Descriptions.Item label="最后登录">
+            {user.last_login_at
+              ? dayjs(user.last_login_at).format('YYYY-MM-DD HH:mm:ss')
+              : '从未登录'}
           </Descriptions.Item>
         </Descriptions>
       </Card>
-    </div>
+    </Card>
   );
 };
 

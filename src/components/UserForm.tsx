@@ -7,11 +7,10 @@ import {
   Row,
   Col,
   Space,
-  Checkbox,
   Divider,
 } from 'antd';
 import { useCreateUser, useUpdateUser } from '../hooks/useUserQuery';
-import { departments, permissions } from '../services/mockData';
+import { departments } from '../services/mockData';
 import type { User, CreateUserRequest, UpdateUserRequest } from '../types/user';
 
 const { Option } = Select;
@@ -35,12 +34,12 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel }) => {
         username: user.username,
         email: user.email,
         phone: user.phone,
-        realName: user.realName,
+        full_name: user.full_name,
         department: user.department,
         position: user.position,
-        role: user.role,
-        status: user.status,
-        permissions: user.permissions,
+        roles: user.roles.map(role => role.id),
+        is_active: user.is_active,
+        is_verified: user.is_verified,
       });
     } else {
       form.resetFields();
@@ -50,11 +49,8 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel }) => {
   const handleSubmit = async (values: any) => {
     try {
       if (isEditing && user) {
-        const updateData: UpdateUserRequest = {
-          id: user.id,
-          ...values,
-        };
-        await updateUserMutation.mutateAsync(updateData);
+        const updateData: UpdateUserRequest = values;
+        await updateUserMutation.mutateAsync({ id: user.id, userData: updateData });
       } else {
         const createData: CreateUserRequest = values;
         await createUserMutation.mutateAsync(createData);
@@ -73,9 +69,9 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel }) => {
       layout="vertical"
       onFinish={handleSubmit}
       initialValues={{
-        role: 'user',
-        status: 'pending',
-        permissions: ['user:read', 'profile:update'],
+        roles: [3],
+        is_active: true,
+        is_verified: false,
       }}
     >
       <Row gutter={16}>
@@ -94,7 +90,7 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel }) => {
         </Col>
         <Col span={12}>
           <Form.Item
-            name="realName"
+            name="full_name"
             label="真实姓名"
             rules={[
               { required: true, message: '请输入真实姓名' },
@@ -163,28 +159,27 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel }) => {
       <Row gutter={16}>
         <Col span={12}>
           <Form.Item
-            name="role"
+            name="roles"
             label="角色"
             rules={[{ required: true, message: '请选择角色' }]}
           >
-            <Select placeholder="请选择角色">
-              <Option value="admin">管理员</Option>
-              <Option value="manager">经理</Option>
-              <Option value="user">普通用户</Option>
+            <Select mode="multiple" placeholder="请选择角色">
+              <Option value={1}>管理员</Option>
+              <Option value={2}>经理</Option>
+              <Option value={3}>普通用户</Option>
             </Select>
           </Form.Item>
         </Col>
         {isEditing && (
           <Col span={12}>
             <Form.Item
-              name="status"
+              name="is_active"
               label="状态"
               rules={[{ required: true, message: '请选择状态' }]}
             >
               <Select placeholder="请选择状态">
-                <Option value="active">正常</Option>
-                <Option value="inactive">禁用</Option>
-                <Option value="pending">待审核</Option>
+                <Option value={true}>正常</Option>
+                <Option value={false}>禁用</Option>
               </Select>
             </Form.Item>
           </Col>
@@ -194,21 +189,13 @@ const UserForm: React.FC<UserFormProps> = ({ user, onSuccess, onCancel }) => {
       <Divider orientation="left">权限设置</Divider>
       
       <Form.Item
-        name="permissions"
-        label="权限"
-        rules={[{ required: true, message: '请选择至少一个权限' }]}
+        name="is_verified"
+        label="邮箱验证状态"
       >
-        <Checkbox.Group style={{ width: '100%' }}>
-          <Row gutter={[16, 8]}>
-            {permissions.map(permission => (
-              <Col span={8} key={permission.key}>
-                <Checkbox value={permission.key}>
-                  {permission.label}
-                </Checkbox>
-              </Col>
-            ))}
-          </Row>
-        </Checkbox.Group>
+        <Select placeholder="请选择验证状态">
+          <Option value={true}>已验证</Option>
+          <Option value={false}>未验证</Option>
+        </Select>
       </Form.Item>
 
       <Form.Item style={{ marginTop: 24, marginBottom: 0 }}>

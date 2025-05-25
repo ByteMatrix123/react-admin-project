@@ -51,7 +51,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
   }
 
   // 检查用户状态
-  if (user.status === 'inactive') {
+  if (!user.is_active) {
     return (
       <div style={{
         display: 'flex',
@@ -66,7 +66,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
     );
   }
 
-  if (user.status === 'pending') {
+  if (!user.is_verified) {
     return (
       <div style={{
         display: 'flex',
@@ -105,7 +105,7 @@ const ProtectedRoute: React.FC<ProtectedRouteProps> = ({
 
   // 检查角色
   if (requiredRoles.length > 0) {
-    const hasRequiredRole = hasRole(requiredRoles);
+    const hasRequiredRole = requiredRoles.some(role => hasRole(role));
     
     if (!hasRequiredRole) {
       return (

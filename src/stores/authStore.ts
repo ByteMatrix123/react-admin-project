@@ -1,7 +1,6 @@
 import { create } from 'zustand';
 import { devtools, persist } from 'zustand/middleware';
 import type { AuthUser, AuthState } from '../types/auth';
-import { storage } from '../utils';
 
 interface AuthActions {
   // 设置认证状态
@@ -29,7 +28,10 @@ interface AuthActions {
   hasPermission: (permission: string) => boolean;
   
   // 检查角色
-  hasRole: (role: string | string[]) => boolean;
+  hasRole: (roleName: string) => boolean;
+  
+  // 检查是否为管理员
+  isAdmin: () => boolean;
   
   // 初始化认证状态
   initAuth: () => void;
@@ -63,8 +65,8 @@ export const useAuthStore = create<AuthStore>()(
           }, false, 'setAuth');
           
           // 存储到localStorage
-          storage.set('auth_token', token);
-          storage.set('auth_refresh_token', refreshToken);
+          localStorage.setItem('access_token', token);
+          localStorage.setItem('refresh_token', refreshToken);
         },
 
         // 清除认证状态
@@ -78,8 +80,8 @@ export const useAuthStore = create<AuthStore>()(
           }, false, 'clearAuth');
           
           // 清除localStorage
-          storage.remove('auth_token');
-          storage.remove('auth_refresh_token');
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
         },
 
         // 设置用户信息
@@ -104,9 +106,9 @@ export const useAuthStore = create<AuthStore>()(
             refreshToken: refreshToken || state.refreshToken,
           }), false, 'updateToken');
           
-          storage.set('auth_token', token);
+          localStorage.setItem('access_token', token);
           if (refreshToken) {
-            storage.set('auth_refresh_token', refreshToken);
+            localStorage.setItem('refresh_token', refreshToken);
           }
         },
 
@@ -121,28 +123,32 @@ export const useAuthStore = create<AuthStore>()(
           const state = get();
           if (!state.user) return false;
           
-          // 管理员拥有所有权限
-          if (state.user.permissions.includes('*')) return true;
+          // 超级管理员拥有所有权限
+          if (state.user.is_superuser) return true;
           
           return state.user.permissions.includes(permission);
         },
 
         // 检查角色
-        hasRole: (role) => {
+        hasRole: (roleName) => {
           const state = get();
           if (!state.user) return false;
           
-          if (Array.isArray(role)) {
-            return role.includes(state.user.role);
-          }
+          return state.user.roles.some(role => role.name === roleName);
+        },
+
+        // 检查是否为管理员
+        isAdmin: () => {
+          const state = get();
+          if (!state.user) return false;
           
-          return state.user.role === role;
+          return state.user.is_superuser || state.user.roles.some(role => role.name === 'admin');
         },
 
         // 初始化认证状态
         initAuth: () => {
-          const token = storage.get('auth_token');
-          const refreshToken = storage.get('auth_refresh_token');
+          const token = localStorage.getItem('access_token');
+          const refreshToken = localStorage.getItem('refresh_token');
           
           if (token && refreshToken) {
             set({

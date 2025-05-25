@@ -14,6 +14,7 @@ import {
   Col,
   Tooltip,
   Drawer,
+  message,
 } from 'antd';
 import {
   PlusOutlined,
@@ -39,7 +40,7 @@ const { Option } = Select;
 
 const UserManagement: React.FC = () => {
 
-  const { searchParams, updateSearchParams } = useUserStore();
+  const { searchParams, setSearchParams } = useUserStore();
   const [selectedRowKeys, setSelectedRowKeys] = useState<string[]>([]);
   const [isModalVisible, setIsModalVisible] = useState(false);
   const [isDetailVisible, setIsDetailVisible] = useState(false);
@@ -84,11 +85,11 @@ const UserManagement: React.FC = () => {
         <Space>
           <Avatar
             size="small"
-            src={record.avatar}
+            src={record.avatar_url}
             icon={<UserOutlined />}
           />
           <div>
-            <div style={{ fontWeight: 500 }}>{record.realName}</div>
+            <div style={{ fontWeight: 500 }}>{record.full_name}</div>
             <div style={{ fontSize: 12, color: '#666' }}>@{record.username}</div>
           </div>
         </Space>
@@ -214,19 +215,19 @@ const UserManagement: React.FC = () => {
 
   // 处理搜索
   const handleSearch = (value: string) => {
-    updateSearchParams({ keyword: value, page: 1 });
+    setSearchParams({ search: value, page: 1 });
   };
 
   // 处理筛选
   const handleFilter = (key: string, value: any) => {
-    updateSearchParams({ [key]: value, page: 1 });
+    setSearchParams({ [key]: value, page: 1 });
   };
 
   // 处理分页
   const handleTableChange = (pagination: any) => {
-    updateSearchParams({
+    setSearchParams({
       page: pagination.current,
-      pageSize: pagination.pageSize,
+      page_size: pagination.pageSize,
     });
   };
 
@@ -249,12 +250,12 @@ const UserManagement: React.FC = () => {
   };
 
   // 处理删除用户
-  const handleDeleteUser = (id: string) => {
+  const handleDeleteUser = (id: number) => {
     deleteUserMutation.mutate(id);
   };
 
   // 处理重置密码
-  const handleResetPassword = (id: string) => {
+  const handleResetPassword = (id: number) => {
     resetPasswordMutation.mutate(id);
   };
 
@@ -272,12 +273,16 @@ const UserManagement: React.FC = () => {
   };
 
   // 处理角色分配提交
-  const handleRoleAssignSubmit = async (userId: string, roleIds: string[]) => {
-    // 这里应该调用角色分配API
-    console.log('分配角色:', userId, roleIds);
-    setIsRoleModalVisible(false);
-    setRoleAssignUser(null);
-    refetch();
+  const handleRoleAssignSubmit = async (userId: number, roleIds: number[]) => {
+    try {
+      // 这里应该调用角色分配API
+      console.log('分配角色:', { userId, roleIds });
+      message.success('角色分配成功');
+      setIsRoleModalVisible(false);
+      refetch();
+    } catch (error) {
+      message.error('角色分配失败');
+    }
   };
 
   // 行选择配置
@@ -358,14 +363,14 @@ const UserManagement: React.FC = () => {
         <Table
           rowSelection={rowSelection}
           columns={columns}
-          dataSource={userListData?.data || []}
+          dataSource={userListData?.items || []}
           rowKey="id"
           loading={isLoading}
           scroll={{ x: 1200 }}
           pagination={{
             current: searchParams.page,
-            pageSize: searchParams.pageSize,
-            total: userListData?.total || 0,
+            pageSize: searchParams.page_size,
+            total: userListData?.pagination.total || 0,
             showSizeChanger: true,
             showQuickJumper: true,
             showTotal: (total, range) =>

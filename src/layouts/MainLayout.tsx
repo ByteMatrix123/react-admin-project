@@ -293,9 +293,9 @@ const MainLayout: React.FC<MainLayoutProps> = ({ children }) => {
                 <Avatar
                   size="small"
                   icon={<UserOutlined />}
-                  src={currentUser?.avatar}
+                  src={currentUser?.avatar_url}
                 />
-                <span>{currentUser?.realName}</span>
+                <span>{currentUser?.full_name}</span>
               </Space>
             </Dropdown>
           </Space>

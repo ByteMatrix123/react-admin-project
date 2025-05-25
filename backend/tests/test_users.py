@@ -21,9 +21,10 @@ class TestUsersAPI:
         assert response.status_code == 200
         data = response.json()
         assert "items" in data
-        assert "total" in data
-        assert "page" in data
-        assert "size" in data
+        assert "pagination" in data
+        assert "total" in data["pagination"]
+        assert "page" in data["pagination"]
+        assert "page_size" in data["pagination"]
         assert isinstance(data["items"], list)
 
     @pytest.mark.asyncio
@@ -51,8 +52,8 @@ class TestUsersAPI:
 
         assert response.status_code == 200
         data = response.json()
-        assert data["page"] == 1
-        assert data["size"] == 2
+        assert data["pagination"]["page"] == 1
+        assert data["pagination"]["page_size"] == 2
         assert len(data["items"]) <= 2
 
     @pytest.mark.asyncio
