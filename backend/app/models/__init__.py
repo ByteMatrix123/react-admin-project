@@ -1,14 +1,15 @@
 """
 Database models package.
 """
-from .user import User, Role, Permission, UserRole, RolePermission
+
 from .base import BaseModel
+from .user import Permission, Role, RolePermission, User, UserRole
 
 __all__ = [
     "BaseModel",
-    "User",
-    "Role", 
     "Permission",
-    "UserRole",
+    "Role",
     "RolePermission",
-] 
+    "User",
+    "UserRole",
+]

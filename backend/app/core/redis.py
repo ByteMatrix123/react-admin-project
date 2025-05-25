@@ -1,13 +1,16 @@
 """
 Redis connection and cache management.
 """
+
 import json
-from typing import Any, Optional, Union
+from typing import Any
+
 import redis.asyncio as redis
+
 from app.core.config import settings
 
 # Global Redis connection
-redis_client: Optional[redis.Redis] = None
+redis_client: redis.Redis | None = None
 
 
 async def init_redis() -> None:
@@ -38,11 +41,11 @@ async def get_redis() -> redis.Redis:
 
 class CacheManager:
     """Redis cache manager."""
-    
+
     def __init__(self, redis_client: redis.Redis):
         self.redis = redis_client
-    
-    async def get(self, key: str) -> Optional[Any]:
+
+    async def get(self, key: str) -> Any | None:
         """Get value from cache."""
         try:
             value = await self.redis.get(key)
@@ -51,13 +54,8 @@ class CacheManager:
             return None
         except Exception:
             return None
-    
-    async def set(
-        self,
-        key: str,
-        value: Any,
-        expire: Optional[int] = None
-    ) -> bool:
+
+    async def set(self, key: str, value: Any, expire: int | None = None) -> bool:
         """Set value in cache."""
         try:
             serialized_value = json.dumps(value, default=str)
@@ -67,35 +65,35 @@ class CacheManager:
                 return await self.redis.set(key, serialized_value)
         except Exception:
             return False
-    
+
     async def delete(self, key: str) -> bool:
         """Delete key from cache."""
         try:
             return bool(await self.redis.delete(key))
         except Exception:
             return False
-    
+
     async def exists(self, key: str) -> bool:
         """Check if key exists in cache."""
         try:
             return bool(await self.redis.exists(key))
         except Exception:
             return False
-    
+
     async def expire(self, key: str, seconds: int) -> bool:
         """Set expiration for key."""
         try:
             return bool(await self.redis.expire(key, seconds))
         except Exception:
             return False
-    
+
     async def ttl(self, key: str) -> int:
         """Get time to live for key."""
         try:
             return await self.redis.ttl(key)
         except Exception:
             return -1
-    
+
     async def flush_all(self) -> bool:
         """Flush all cache."""
         try:
@@ -108,4 +106,4 @@ class CacheManager:
 async def get_cache_manager() -> CacheManager:
     """Get cache manager instance."""
     redis = await get_redis()
-    return CacheManager(redis) 
+    return CacheManager(redis)

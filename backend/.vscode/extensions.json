@@ -1,0 +1,23 @@
+{
+  "recommendations": [
+    "charliermarsh.ruff",
+    "ms-python.python",
+    "ms-python.mypy-type-checker",
+    "ms-python.debugpy",
+    "ms-vscode.vscode-json",
+    "redhat.vscode-yaml",
+    "ms-vscode.makefile-tools",
+    "ms-vscode-remote.remote-containers",
+    "github.vscode-github-actions",
+    "ms-vscode.test-adapter-converter",
+    "littlefoxteam.vscode-python-test-adapter",
+    "formulahendry.auto-rename-tag",
+    "bradlc.vscode-tailwindcss",
+    "esbenp.prettier-vscode"
+  ],
+  "unwantedRecommendations": [
+    "ms-python.flake8",
+    "ms-python.black-formatter",
+    "ms-python.isort"
+  ]
+} 

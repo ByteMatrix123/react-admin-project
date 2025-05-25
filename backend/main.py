@@ -1,24 +1,25 @@
 """
 FastAPI main application.
 """
+
 import logging
-from datetime import datetime
 from contextlib import asynccontextmanager
+from datetime import datetime
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
-from app.core.config import settings
-from app.core.redis import init_redis, close_redis
 from app.api.auth import router as auth_router
+from app.core.config import settings
+from app.core.redis import close_redis, init_redis
 from app.schemas.common import HealthCheck
 
 # Configure logging
 logging.basicConfig(
     level=getattr(logging, settings.log_level.upper()),
-    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+    format="%(asctime)s - %(name)s - %(levelname)s - %(message)s",
 )
 
 logger = logging.getLogger(__name__)
@@ -31,9 +32,9 @@ async def lifespan(app: FastAPI):
     logger.info("Starting up...")
     await init_redis()
     logger.info("Redis initialized")
-    
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down...")
     await close_redis()
@@ -47,7 +48,7 @@ app = FastAPI(
     description="Enterprise Admin System Backend API",
     docs_url="/docs" if settings.debug else None,
     redoc_url="/redoc" if settings.debug else None,
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # Add CORS middleware
@@ -63,7 +64,7 @@ app.add_middleware(
 if not settings.debug:
     app.add_middleware(
         TrustedHostMiddleware,
-        allowed_hosts=["localhost", "127.0.0.1", "*.yourdomain.com"]
+        allowed_hosts=["localhost", "127.0.0.1", "*.yourdomain.com"],
     )
 
 
@@ -76,8 +77,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={
             "error": "Internal server error",
-            "detail": str(exc) if settings.debug else "An unexpected error occurred"
-        }
+            "detail": str(exc) if settings.debug else "An unexpected error occurred",
+        },
     )
 
 
@@ -90,7 +91,7 @@ async def health_check():
         timestamp=datetime.utcnow().isoformat(),
         version=settings.app_version,
         database="connected",  # TODO: Add actual database check
-        redis="connected"      # TODO: Add actual Redis check
+        redis="connected",  # TODO: Add actual Redis check
     )
 
 
@@ -101,7 +102,9 @@ async def root():
     return {
         "message": f"Welcome to {settings.app_name}",
         "version": settings.app_version,
-        "docs": "/docs" if settings.debug else "Documentation not available in production"
+        "docs": "/docs"
+        if settings.debug
+        else "Documentation not available in production",
     }
 
 
@@ -110,6 +113,7 @@ app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
 
 # Import additional routers
 from app.api.users import router as users_router
+
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
 
 # TODO: Add more routers
@@ -119,10 +123,11 @@ app.include_router(users_router, prefix="/api/users", tags=["Users"])
 
 if __name__ == "__main__":
     import uvicorn
+
     uvicorn.run(
         "main:app",
         host="0.0.0.0",
         port=8000,
         reload=settings.debug,
-        log_level=settings.log_level.lower()
-    ) 
+        log_level=settings.log_level.lower(),
+    )

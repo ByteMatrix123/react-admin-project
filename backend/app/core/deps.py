@@ -1,13 +1,13 @@
 """
 Dependency injection for FastAPI.
 """
-from typing import Generator, Optional
+
 from fastapi import Depends, HTTPException, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.database import get_async_session
-from app.core.redis import get_cache_manager, CacheManager
+from app.core.redis import CacheManager, get_cache_manager
 from app.core.security import verify_token
 from app.models.user import User
 from app.services.user import UserService
@@ -28,19 +28,19 @@ async def get_cache() -> CacheManager:
 
 
 async def get_current_user_id(
-    credentials: HTTPAuthorizationCredentials = Depends(security)
+    credentials: HTTPAuthorizationCredentials = Depends(security),
 ) -> int:
     """Get current user ID from JWT token."""
     token = credentials.credentials
     user_id = verify_token(token, "access")
-    
+
     if user_id is None:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Invalid authentication credentials",
             headers={"WWW-Authenticate": "Bearer"},
         )
-    
+
     try:
         return int(user_id)
     except ValueError:
@@ -52,79 +52,71 @@ async def get_current_user_id(
 
 
 async def get_current_user(
-    user_id: int = Depends(get_current_user_id),
-    db: AsyncSession = Depends(get_db)
+    user_id: int = Depends(get_current_user_id), db: AsyncSession = Depends(get_db)
 ) -> User:
     """Get current user from database."""
     user_service = UserService(db)
     user = await user_service.get_by_id(user_id)
-    
+
     if not user:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="User not found"
         )
-    
+
     if not user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
-    
+
     return user
 
 
 async def get_current_active_user(
-    current_user: User = Depends(get_current_user)
+    current_user: User = Depends(get_current_user),
 ) -> User:
     """Get current active user."""
     if not current_user.is_active:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user"
         )
     return current_user
 
 
-async def get_current_superuser(
-    current_user: User = Depends(get_current_user)
-) -> User:
+async def get_current_superuser(current_user: User = Depends(get_current_user)) -> User:
     """Get current superuser."""
     if not current_user.is_superuser:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Not enough permissions"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
         )
     return current_user
 
 
 def require_permission(permission: str):
     """Dependency factory for permission checking."""
-    async def check_permission(
-        current_user: User = Depends(get_current_user)
-    ) -> User:
-        if not current_user.is_superuser and not current_user.has_permission(permission):
+
+    async def check_permission(current_user: User = Depends(get_current_user)) -> User:
+        if not current_user.is_superuser and not current_user.has_permission(
+            permission
+        ):
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Permission '{permission}' required"
+                detail=f"Permission '{permission}' required",
             )
         return current_user
-    
+
     return check_permission
 
 
 def require_role(role: str):
     """Dependency factory for role checking."""
-    async def check_role(
-        current_user: User = Depends(get_current_user)
-    ) -> User:
+
+    async def check_role(current_user: User = Depends(get_current_user)) -> User:
         if not current_user.is_superuser and not current_user.has_role(role):
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail=f"Role '{role}' required"
+                status_code=status.HTTP_403_FORBIDDEN, detail=f"Role '{role}' required"
             )
         return current_user
-    
+
     return check_role
 
 
@@ -141,28 +133,28 @@ require_permission_write = require_permission("permission:write")
 
 # Optional authentication (for public endpoints that can benefit from user context)
 async def get_current_user_optional(
-    credentials: Optional[HTTPAuthorizationCredentials] = Depends(
+    credentials: HTTPAuthorizationCredentials | None = Depends(
         HTTPBearer(auto_error=False)
     ),
-    db: AsyncSession = Depends(get_db)
-) -> Optional[User]:
+    db: AsyncSession = Depends(get_db),
+) -> User | None:
     """Get current user optionally (for public endpoints)."""
     if not credentials:
         return None
-    
+
     try:
         token = credentials.credentials
         user_id = verify_token(token, "access")
-        
+
         if user_id is None:
             return None
-        
+
         user_service = UserService(db)
         user = await user_service.get_by_id(int(user_id))
-        
+
         if not user or not user.is_active:
             return None
-        
+
         return user
     except Exception:
-        return None 
+        return None

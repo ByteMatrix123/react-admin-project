@@ -37,6 +37,14 @@
 - **错误处理**: 统一的错误处理和用户提示
 - **自动重试**: 令牌过期自动刷新机制
 
+#### 6. 代码质量工具
+- **Ruff集成**: 代码检查、格式化、导入排序
+- **静态类型检查**: MyPy 类型验证
+- **安全检查**: Bandit 安全漏洞扫描
+- **Git Hooks**: pre-commit 自动化检查
+- **CI/CD**: GitHub Actions 工作流
+- **VS Code集成**: 开发环境配置和扩展推荐
+
 ### 🔧 技术栈详情
 
 #### 后端技术栈
@@ -51,6 +59,10 @@
 - JWT (认证)
 - bcrypt (密码加密)
 - uvicorn (ASGI服务器)
+- Ruff (代码检查和格式化)
+- MyPy (静态类型检查)
+- Bandit (安全检查)
+- pre-commit (Git hooks)
 ```
 
 #### 前端技术栈
@@ -137,6 +149,27 @@ curl -X GET http://localhost:8000/api/users/ \
 - 访问 http://localhost:5173/api-test 进行前后端连接测试
 - 访问 http://localhost:5173/login 进行登录测试
 - 使用演示账户: admin / Admin123!
+
+#### 代码质量检查
+```bash
+# 进入后端目录
+cd backend
+
+# 运行代码检查
+make lint
+
+# 自动修复代码问题
+make lint-fix
+
+# 格式化代码
+make format
+
+# 运行所有检查
+make check
+
+# 安全检查
+make security
+```
 
 ### 📁 项目结构
 

@@ -1,13 +1,13 @@
 """
 Database initialization script.
 """
-import asyncio
-from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.database import async_engine, AsyncSessionLocal
+import asyncio
+
+from app.core.database import AsyncSessionLocal, async_engine
 from app.core.security import get_password_hash
-from app.models.user import User, Role, Permission
 from app.models.base import BaseModel
+from app.models.user import Permission, Role, User
 
 
 async def create_tables():
@@ -23,32 +23,99 @@ async def create_default_permissions():
         # Define default permissions
         permissions_data = [
             # User permissions
-            {"name": "user:create", "display_name": "Create User", "resource": "user", "action": "create"},
-            {"name": "user:read", "display_name": "Read User", "resource": "user", "action": "read"},
-            {"name": "user:update", "display_name": "Update User", "resource": "user", "action": "update"},
-            {"name": "user:delete", "display_name": "Delete User", "resource": "user", "action": "delete"},
-            
+            {
+                "name": "user:create",
+                "display_name": "Create User",
+                "resource": "user",
+                "action": "create",
+            },
+            {
+                "name": "user:read",
+                "display_name": "Read User",
+                "resource": "user",
+                "action": "read",
+            },
+            {
+                "name": "user:update",
+                "display_name": "Update User",
+                "resource": "user",
+                "action": "update",
+            },
+            {
+                "name": "user:delete",
+                "display_name": "Delete User",
+                "resource": "user",
+                "action": "delete",
+            },
             # Role permissions
-            {"name": "role:create", "display_name": "Create Role", "resource": "role", "action": "create"},
-            {"name": "role:read", "display_name": "Read Role", "resource": "role", "action": "read"},
-            {"name": "role:update", "display_name": "Update Role", "resource": "role", "action": "update"},
-            {"name": "role:delete", "display_name": "Delete Role", "resource": "role", "action": "delete"},
-            
+            {
+                "name": "role:create",
+                "display_name": "Create Role",
+                "resource": "role",
+                "action": "create",
+            },
+            {
+                "name": "role:read",
+                "display_name": "Read Role",
+                "resource": "role",
+                "action": "read",
+            },
+            {
+                "name": "role:update",
+                "display_name": "Update Role",
+                "resource": "role",
+                "action": "update",
+            },
+            {
+                "name": "role:delete",
+                "display_name": "Delete Role",
+                "resource": "role",
+                "action": "delete",
+            },
             # Permission permissions
-            {"name": "permission:create", "display_name": "Create Permission", "resource": "permission", "action": "create"},
-            {"name": "permission:read", "display_name": "Read Permission", "resource": "permission", "action": "read"},
-            {"name": "permission:update", "display_name": "Update Permission", "resource": "permission", "action": "update"},
-            {"name": "permission:delete", "display_name": "Delete Permission", "resource": "permission", "action": "delete"},
-            
+            {
+                "name": "permission:create",
+                "display_name": "Create Permission",
+                "resource": "permission",
+                "action": "create",
+            },
+            {
+                "name": "permission:read",
+                "display_name": "Read Permission",
+                "resource": "permission",
+                "action": "read",
+            },
+            {
+                "name": "permission:update",
+                "display_name": "Update Permission",
+                "resource": "permission",
+                "action": "update",
+            },
+            {
+                "name": "permission:delete",
+                "display_name": "Delete Permission",
+                "resource": "permission",
+                "action": "delete",
+            },
             # System permissions
-            {"name": "system:admin", "display_name": "System Admin", "resource": "system", "action": "admin"},
-            {"name": "system:monitor", "display_name": "System Monitor", "resource": "system", "action": "monitor"},
+            {
+                "name": "system:admin",
+                "display_name": "System Admin",
+                "resource": "system",
+                "action": "admin",
+            },
+            {
+                "name": "system:monitor",
+                "display_name": "System Monitor",
+                "resource": "system",
+                "action": "monitor",
+            },
         ]
-        
+
         for perm_data in permissions_data:
             permission = Permission(**perm_data)
             session.add(permission)
-        
+
         await session.commit()
         print("✅ Default permissions created successfully")
 
@@ -61,28 +128,28 @@ async def create_default_roles():
             name="super_admin",
             display_name="Super Administrator",
             description="Full system access with all permissions",
-            is_system=True
+            is_system=True,
         )
         session.add(super_admin_role)
-        
+
         # Create Admin role
         admin_role = Role(
             name="admin",
             display_name="Administrator",
             description="Administrative access to most system features",
-            is_system=True
+            is_system=True,
         )
         session.add(admin_role)
-        
+
         # Create User role
         user_role = Role(
             name="user",
             display_name="User",
             description="Basic user access",
-            is_system=True
+            is_system=True,
         )
         session.add(user_role)
-        
+
         await session.commit()
         print("✅ Default roles created successfully")
 
@@ -92,27 +159,32 @@ async def assign_permissions_to_roles():
     async with AsyncSessionLocal() as session:
         # Get all permissions
         from sqlalchemy import select
+
         permissions_result = await session.execute(select(Permission))
         all_permissions = permissions_result.scalars().all()
-        
+
         # Get roles
         roles_result = await session.execute(select(Role))
         roles = {role.name: role for role in roles_result.scalars().all()}
-        
+
         # Assign all permissions to super_admin
         if "super_admin" in roles:
             roles["super_admin"].permissions.extend(all_permissions)
-        
+
         # Assign specific permissions to admin
         if "admin" in roles:
             admin_permissions = [p for p in all_permissions if p.name != "system:admin"]
             roles["admin"].permissions.extend(admin_permissions)
-        
+
         # Assign basic permissions to user
         if "user" in roles:
-            user_permissions = [p for p in all_permissions if p.resource == "user" and p.action == "read"]
+            user_permissions = [
+                p
+                for p in all_permissions
+                if p.resource == "user" and p.action == "read"
+            ]
             roles["user"].permissions.extend(user_permissions)
-        
+
         await session.commit()
         print("✅ Permissions assigned to roles successfully")
 
@@ -122,21 +194,20 @@ async def create_super_admin_user():
     async with AsyncSessionLocal() as session:
         # Check if super admin already exists
         from sqlalchemy import select
-        result = await session.execute(
-            select(User).where(User.username == "admin")
-        )
+
+        result = await session.execute(select(User).where(User.username == "admin"))
         existing_user = result.scalar_one_or_none()
-        
+
         if existing_user:
             print("⚠️  Super admin user already exists")
             return
-        
+
         # Get super admin role
         role_result = await session.execute(
             select(Role).where(Role.name == "super_admin")
         )
         super_admin_role = role_result.scalar_one_or_none()
-        
+
         # Create super admin user
         super_admin = User(
             username="admin",
@@ -147,15 +218,15 @@ async def create_super_admin_user():
             is_verified=True,
             is_superuser=True,
             department="IT",
-            position="System Administrator"
+            position="System Administrator",
         )
-        
+
         if super_admin_role:
             super_admin.roles.append(super_admin_role)
-        
+
         session.add(super_admin)
         await session.commit()
-        
+
         print("✅ Super admin user created successfully")
         print("   Username: admin")
         print("   Password: Admin123!")
@@ -166,11 +237,11 @@ async def create_demo_users():
     """Create demo users for testing."""
     async with AsyncSessionLocal() as session:
         from sqlalchemy import select
-        
+
         # Get roles
         roles_result = await session.execute(select(Role))
         roles = {role.name: role for role in roles_result.scalars().all()}
-        
+
         demo_users = [
             {
                 "username": "john_doe",
@@ -181,7 +252,7 @@ async def create_demo_users():
                 "last_name": "Doe",
                 "department": "Engineering",
                 "position": "Software Engineer",
-                "role": "user"
+                "role": "user",
             },
             {
                 "username": "jane_smith",
@@ -192,7 +263,7 @@ async def create_demo_users():
                 "last_name": "Smith",
                 "department": "HR",
                 "position": "HR Manager",
-                "role": "admin"
+                "role": "admin",
             },
             {
                 "username": "bob_wilson",
@@ -203,20 +274,20 @@ async def create_demo_users():
                 "last_name": "Wilson",
                 "department": "Marketing",
                 "position": "Marketing Specialist",
-                "role": "user"
-            }
+                "role": "user",
+            },
         ]
-        
+
         for user_data in demo_users:
             # Check if user already exists
             result = await session.execute(
                 select(User).where(User.username == user_data["username"])
             )
             existing_user = result.scalar_one_or_none()
-            
+
             if existing_user:
                 continue
-            
+
             # Create user
             user = User(
                 username=user_data["username"],
@@ -228,16 +299,16 @@ async def create_demo_users():
                 department=user_data["department"],
                 position=user_data["position"],
                 is_active=True,
-                is_verified=True
+                is_verified=True,
             )
-            
+
             # Assign role
             role_name = user_data["role"]
             if role_name in roles:
                 user.roles.append(roles[role_name])
-            
+
             session.add(user)
-        
+
         await session.commit()
         print("✅ Demo users created successfully")
 
@@ -245,7 +316,7 @@ async def create_demo_users():
 async def init_database():
     """Initialize database with default data."""
     print("🚀 Initializing database...")
-    
+
     try:
         await create_tables()
         await create_default_permissions()
@@ -253,13 +324,13 @@ async def init_database():
         await assign_permissions_to_roles()
         await create_super_admin_user()
         await create_demo_users()
-        
+
         print("🎉 Database initialization completed successfully!")
-        
+
     except Exception as e:
         print(f"❌ Database initialization failed: {e}")
         raise
 
 
 if __name__ == "__main__":
-    asyncio.run(init_database()) 
+    asyncio.run(init_database())

@@ -1,14 +1,15 @@
 """
 Service layer for business logic.
 """
-from .user import UserService
+
 from .auth import AuthService
-from .role import RoleService
 from .permission import PermissionService
+from .role import RoleService
+from .user import UserService
 
 __all__ = [
-    "UserService",
-    "AuthService", 
-    "RoleService",
+    "AuthService",
     "PermissionService",
-] 
+    "RoleService",
+    "UserService",
+]
