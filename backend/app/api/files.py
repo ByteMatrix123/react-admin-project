@@ -32,7 +32,7 @@ async def upload_file(
     if not validate_file_extension(file.filename, settings.allowed_extensions):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File type not allowed. Allowed types: {', '.join(settings.allowed_extensions)}"
+            detail=f"File type not allowed. Allowed types: {', '.join(settings.allowed_extensions)}",
         )
 
     # Read file content to check size
@@ -43,12 +43,16 @@ async def upload_file(
     if not validate_file_size(file_size, settings.max_file_size):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"File too large. Maximum size: {settings.max_file_size} bytes"
+            detail=f"File too large. Maximum size: {settings.max_file_size} bytes",
         )
 
     # Generate unique filename
-    file_extension = file.filename.split('.')[-1] if '.' in file.filename else ''
-    unique_filename = f"{generate_uuid_string()}.{file_extension}" if file_extension else generate_uuid_string()
+    file_extension = file.filename.split(".")[-1] if "." in file.filename else ""
+    unique_filename = (
+        f"{generate_uuid_string()}.{file_extension}"
+        if file_extension
+        else generate_uuid_string()
+    )
 
     # Save file
     file_path = UPLOAD_DIR / unique_filename
@@ -72,7 +76,7 @@ async def upload_file(
 
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to save file"
+            detail="Failed to save file",
         )
 
 
@@ -86,7 +90,7 @@ async def upload_multiple_files(
     if len(files) > 10:  # Limit to 10 files at once
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Too many files. Maximum 10 files allowed"
+            detail="Too many files. Maximum 10 files allowed",
         )
 
     uploaded_files = []
@@ -96,10 +100,12 @@ async def upload_multiple_files(
         try:
             # Validate file extension
             if not validate_file_extension(file.filename, settings.allowed_extensions):
-                failed_files.append({
-                    "filename": file.filename,
-                    "error": f"File type not allowed. Allowed types: {', '.join(settings.allowed_extensions)}"
-                })
+                failed_files.append(
+                    {
+                        "filename": file.filename,
+                        "error": f"File type not allowed. Allowed types: {', '.join(settings.allowed_extensions)}",
+                    }
+                )
                 continue
 
             # Read file content to check size
@@ -108,15 +114,23 @@ async def upload_multiple_files(
 
             # Validate file size
             if not validate_file_size(file_size, settings.max_file_size):
-                failed_files.append({
-                    "filename": file.filename,
-                    "error": f"File too large. Maximum size: {settings.max_file_size} bytes"
-                })
+                failed_files.append(
+                    {
+                        "filename": file.filename,
+                        "error": f"File too large. Maximum size: {settings.max_file_size} bytes",
+                    }
+                )
                 continue
 
             # Generate unique filename
-            file_extension = file.filename.split('.')[-1] if '.' in file.filename else ''
-            unique_filename = f"{generate_uuid_string()}.{file_extension}" if file_extension else generate_uuid_string()
+            file_extension = (
+                file.filename.split(".")[-1] if "." in file.filename else ""
+            )
+            unique_filename = (
+                f"{generate_uuid_string()}.{file_extension}"
+                if file_extension
+                else generate_uuid_string()
+            )
 
             # Save file
             file_path = UPLOAD_DIR / unique_filename
@@ -124,19 +138,20 @@ async def upload_multiple_files(
             with open(file_path, "wb") as buffer:
                 buffer.write(content)
 
-            uploaded_files.append({
-                "filename": unique_filename,
-                "original_filename": file.filename,
-                "size": file_size,
-                "content_type": file.content_type,
-                "url": f"/api/files/{unique_filename}",
-            })
+            uploaded_files.append(
+                {
+                    "filename": unique_filename,
+                    "original_filename": file.filename,
+                    "size": file_size,
+                    "content_type": file.content_type,
+                    "url": f"/api/files/{unique_filename}",
+                }
+            )
 
         except Exception:
-            failed_files.append({
-                "filename": file.filename,
-                "error": "Failed to save file"
-            })
+            failed_files.append(
+                {"filename": file.filename, "error": "Failed to save file"}
+            )
 
     return {
         "uploaded_files": uploaded_files,
@@ -158,14 +173,11 @@ async def download_file(
 
     if not file_path.exists():
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
         )
 
     return FileResponse(
-        path=file_path,
-        filename=safe_name,
-        media_type='application/octet-stream'
+        path=file_path, filename=safe_name, media_type="application/octet-stream"
     )
 
 
@@ -182,8 +194,7 @@ async def delete_file(
 
     if not file_path.exists():
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="File not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="File not found"
         )
 
     try:
@@ -193,7 +204,7 @@ async def delete_file(
     except Exception:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to delete file"
+            detail="Failed to delete file",
         )
 
 
@@ -207,13 +218,15 @@ async def list_files(
     for file_path in UPLOAD_DIR.iterdir():
         if file_path.is_file():
             stat = file_path.stat()
-            files.append({
-                "filename": file_path.name,
-                "size": stat.st_size,
-                "created_at": stat.st_ctime,
-                "modified_at": stat.st_mtime,
-                "url": f"/api/files/{file_path.name}",
-            })
+            files.append(
+                {
+                    "filename": file_path.name,
+                    "size": stat.st_size,
+                    "created_at": stat.st_ctime,
+                    "modified_at": stat.st_mtime,
+                    "url": f"/api/files/{file_path.name}",
+                }
+            )
 
     return {
         "files": files,

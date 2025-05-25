@@ -2,7 +2,6 @@
 Role management API endpoints.
 """
 
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -24,7 +23,7 @@ async def get_roles(
 ):
     """Get all roles with pagination and search."""
     role_service = RoleService(db)
-    roles = await role_service.get_roles(skip=skip, limit=limit, search=search)
+    roles, total = await role_service.get_all(skip=skip, limit=limit, search=search)
     return roles
 
 
@@ -36,11 +35,10 @@ async def get_role(
 ):
     """Get role by ID."""
     role_service = RoleService(db)
-    role = await role_service.get_role_by_id(role_id)
+    role = await role_service.get_by_id(role_id)
     if not role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
     return role
 
@@ -55,14 +53,13 @@ async def create_role(
     role_service = RoleService(db)
 
     # Check if role name already exists
-    existing_role = await role_service.get_role_by_name(role_data.name)
+    existing_role = await role_service.get_by_name(role_data.name)
     if existing_role:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Role name already exists"
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Role name already exists"
         )
 
-    role = await role_service.create_role(role_data)
+    role = await role_service.create(role_data.model_dump())
     return role
 
 
@@ -77,23 +74,22 @@ async def update_role(
     role_service = RoleService(db)
 
     # Check if role exists
-    existing_role = await role_service.get_role_by_id(role_id)
+    existing_role = await role_service.get_by_id(role_id)
     if not existing_role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
 
     # Check if new name conflicts with existing role
     if role_data.name and role_data.name != existing_role.name:
-        name_conflict = await role_service.get_role_by_name(role_data.name)
+        name_conflict = await role_service.get_by_name(role_data.name)
         if name_conflict:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Role name already exists"
+                detail="Role name already exists",
             )
 
-    role = await role_service.update_role(role_id, role_data)
+    role = await role_service.update(role_id, role_data.model_dump(exclude_unset=True))
     return role
 
 
@@ -107,21 +103,20 @@ async def delete_role(
     role_service = RoleService(db)
 
     # Check if role exists
-    existing_role = await role_service.get_role_by_id(role_id)
+    existing_role = await role_service.get_by_id(role_id)
     if not existing_role:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role not found"
         )
 
     # Check if role is system role (cannot be deleted)
     if existing_role.name in ["super_admin", "admin", "user"]:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="System roles cannot be deleted"
+            detail="System roles cannot be deleted",
         )
 
-    await role_service.delete_role(role_id)
+    await role_service.delete(role_id)
 
 
 @router.post("/{role_id}/permissions/{permission_id}", response_model=RoleResponse)
@@ -134,13 +129,13 @@ async def assign_permission_to_role(
     """Assign permission to role."""
     role_service = RoleService(db)
 
-    role = await role_service.assign_permission(role_id, permission_id)
-    if not role:
+    success = await role_service.assign_permission(role_id, permission_id)
+    if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role or permission not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role or permission not found"
         )
 
+    role = await role_service.get_by_id(role_id)
     return role
 
 
@@ -154,11 +149,11 @@ async def remove_permission_from_role(
     """Remove permission from role."""
     role_service = RoleService(db)
 
-    role = await role_service.remove_permission(role_id, permission_id)
-    if not role:
+    success = await role_service.remove_permission(role_id, permission_id)
+    if not success:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Role or permission not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Role or permission not found"
         )
 
+    role = await role_service.get_by_id(role_id)
     return role

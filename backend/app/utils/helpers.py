@@ -14,12 +14,13 @@ def generate_random_string(length: int = 32, include_symbols: bool = False) -> s
     if include_symbols:
         characters += "!@#$%^&*"
 
-    return ''.join(secrets.choice(characters) for _ in range(length))
+    return "".join(secrets.choice(characters) for _ in range(length))
 
 
 def generate_uuid_string() -> str:
     """Generate a UUID-like string."""
     import uuid
+
     return str(uuid.uuid4())
 
 
@@ -41,18 +42,18 @@ def hash_string(text: str) -> str:
 
 def get_file_extension(filename: str) -> str | None:
     """Get file extension from filename."""
-    if '.' not in filename:
+    if "." not in filename:
         return None
 
-    return filename.rsplit('.', 1)[1].lower()
+    return filename.rsplit(".", 1)[1].lower()
 
 
 def get_file_name_without_extension(filename: str) -> str:
     """Get filename without extension."""
-    if '.' not in filename:
+    if "." not in filename:
         return filename
 
-    return filename.rsplit('.', 1)[0]
+    return filename.rsplit(".", 1)[0]
 
 
 def ensure_directory_exists(directory: Path) -> None:
@@ -65,10 +66,10 @@ def safe_filename(filename: str) -> str:
     import re
 
     # Remove or replace unsafe characters
-    safe_name = re.sub(r'[<>:"/\\|?*]', '_', filename)
+    safe_name = re.sub(r'[<>:"/\\|?*]', "_", filename)
 
     # Remove leading/trailing spaces and dots
-    safe_name = safe_name.strip(' .')
+    safe_name = safe_name.strip(" .")
 
     # Ensure it's not empty
     if not safe_name:
@@ -80,10 +81,10 @@ def safe_filename(filename: str) -> str:
 def chunks(lst: list, chunk_size: int):
     """Yield successive chunks from list."""
     for i in range(0, len(lst), chunk_size):
-        yield lst[i:i + chunk_size]
+        yield lst[i : i + chunk_size]
 
 
-def flatten_dict(d: dict, parent_key: str = '', sep: str = '.') -> dict:
+def flatten_dict(d: dict, parent_key: str = "", sep: str = ".") -> dict:
     """Flatten nested dictionary."""
     items = []
     for k, v in d.items():
@@ -113,11 +114,13 @@ def is_valid_url(url: str) -> bool:
     import re
 
     url_pattern = re.compile(
-        r'^https?://'  # http:// or https://
-        r'(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|'  # domain...
-        r'localhost|'  # localhost...
-        r'\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})'  # ...or ip
-        r'(?::\d+)?'  # optional port
-        r'(?:/?|[/?]\S+)$', re.IGNORECASE)
+        r"^https?://"  # http:// or https://
+        r"(?:(?:[A-Z0-9](?:[A-Z0-9-]{0,61}[A-Z0-9])?\.)+[A-Z]{2,6}\.?|"  # domain...
+        r"localhost|"  # localhost...
+        r"\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})"  # ...or ip
+        r"(?::\d+)?"  # optional port
+        r"(?:/?|[/?]\S+)$",
+        re.IGNORECASE,
+    )
 
     return url_pattern.match(url) is not None

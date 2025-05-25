@@ -47,7 +47,7 @@ async def register(user_data: UserRegister, db: AsyncSession = Depends(get_db)):
     """User registration."""
     auth_service = AuthService(db)
 
-    user = await auth_service.register(user_data.dict())
+    user = await auth_service.register(user_data.model_dump())
 
     if not user:
         raise HTTPException(
@@ -89,7 +89,7 @@ async def request_password_reset(
     """Request password reset."""
     auth_service = AuthService(db)
 
-    reset_token = await auth_service.request_password_reset(reset_request.email)
+    await auth_service.request_password_reset(reset_request.email)
 
     # Always return success message for security reasons
     # Don't reveal if email exists or not

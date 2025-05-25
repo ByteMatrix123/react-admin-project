@@ -2,7 +2,6 @@
 Permission management API endpoints.
 """
 
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -30,12 +29,8 @@ async def get_permissions(
 ):
     """Get all permissions with pagination and filtering."""
     permission_service = PermissionService(db)
-    permissions = await permission_service.get_permissions(
-        skip=skip,
-        limit=limit,
-        search=search,
-        resource=resource,
-        action=action
+    permissions, total = await permission_service.get_all(
+        skip=skip, limit=limit, search=search, resource=resource, action=action
     )
     return permissions
 
@@ -48,16 +43,17 @@ async def get_permission(
 ):
     """Get permission by ID."""
     permission_service = PermissionService(db)
-    permission = await permission_service.get_permission_by_id(permission_id)
+    permission = await permission_service.get_by_id(permission_id)
     if not permission:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Permission not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found"
         )
     return permission
 
 
-@router.post("/", response_model=PermissionResponse, status_code=status.HTTP_201_CREATED)
+@router.post(
+    "/", response_model=PermissionResponse, status_code=status.HTTP_201_CREATED
+)
 async def create_permission(
     permission_data: PermissionCreate,
     db: AsyncSession = Depends(get_db),
@@ -67,14 +63,14 @@ async def create_permission(
     permission_service = PermissionService(db)
 
     # Check if permission name already exists
-    existing_permission = await permission_service.get_permission_by_name(permission_data.name)
+    existing_permission = await permission_service.get_by_name(permission_data.name)
     if existing_permission:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Permission name already exists"
+            detail="Permission name already exists",
         )
 
-    permission = await permission_service.create_permission(permission_data)
+    permission = await permission_service.create(permission_data.model_dump())
     return permission
 
 
@@ -89,23 +85,24 @@ async def update_permission(
     permission_service = PermissionService(db)
 
     # Check if permission exists
-    existing_permission = await permission_service.get_permission_by_id(permission_id)
+    existing_permission = await permission_service.get_by_id(permission_id)
     if not existing_permission:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Permission not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found"
         )
 
     # Check if new name conflicts with existing permission
     if permission_data.name and permission_data.name != existing_permission.name:
-        name_conflict = await permission_service.get_permission_by_name(permission_data.name)
+        name_conflict = await permission_service.get_by_name(permission_data.name)
         if name_conflict:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail="Permission name already exists"
+                detail="Permission name already exists",
             )
 
-    permission = await permission_service.update_permission(permission_id, permission_data)
+    permission = await permission_service.update(
+        permission_id, permission_data.model_dump(exclude_unset=True)
+    )
     return permission
 
 
@@ -119,28 +116,36 @@ async def delete_permission(
     permission_service = PermissionService(db)
 
     # Check if permission exists
-    existing_permission = await permission_service.get_permission_by_id(permission_id)
+    existing_permission = await permission_service.get_by_id(permission_id)
     if not existing_permission:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Permission not found"
+            status_code=status.HTTP_404_NOT_FOUND, detail="Permission not found"
         )
 
     # Check if permission is system permission (cannot be deleted)
     system_permissions = [
-        "user:read", "user:create", "user:update", "user:delete",
-        "role:read", "role:create", "role:update", "role:delete",
-        "permission:read", "permission:create", "permission:update", "permission:delete",
-        "system:admin"
+        "user:read",
+        "user:create",
+        "user:update",
+        "user:delete",
+        "role:read",
+        "role:create",
+        "role:update",
+        "role:delete",
+        "permission:read",
+        "permission:create",
+        "permission:update",
+        "permission:delete",
+        "system:admin",
     ]
 
     if existing_permission.name in system_permissions:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="System permissions cannot be deleted"
+            detail="System permissions cannot be deleted",
         )
 
-    await permission_service.delete_permission(permission_id)
+    await permission_service.delete(permission_id)
 
 
 @router.get("/resources/", response_model=list[str])
@@ -150,7 +155,7 @@ async def get_permission_resources(
 ):
     """Get all unique permission resources."""
     permission_service = PermissionService(db)
-    resources = await permission_service.get_unique_resources()
+    resources = await permission_service.get_resources()
     return resources
 
 
@@ -161,5 +166,5 @@ async def get_permission_actions(
 ):
     """Get all unique permission actions."""
     permission_service = PermissionService(db)
-    actions = await permission_service.get_unique_actions()
+    actions = await permission_service.get_actions()
     return actions

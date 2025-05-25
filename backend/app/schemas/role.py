@@ -31,6 +31,20 @@ class RoleUpdate(BaseModel):
     is_active: bool | None = None
 
 
+class PermissionInRole(BaseModel):
+    """Permission schema for role response."""
+
+    id: int
+    name: str
+    display_name: str
+    description: str | None = None
+    resource: str
+    action: str
+    is_active: bool
+
+    model_config = {"from_attributes": True}
+
+
 class RoleResponse(RoleBase):
     """Role response schema."""
 
@@ -38,7 +52,7 @@ class RoleResponse(RoleBase):
     is_system: bool
     created_at: datetime
     updated_at: datetime
-    permissions: list[dict] = []
+    permissions: list[PermissionInRole] = []
 
     model_config = {"from_attributes": True}
 

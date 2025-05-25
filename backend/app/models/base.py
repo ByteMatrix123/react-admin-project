@@ -22,7 +22,7 @@ class BaseModel(Base):
     )
 
     @declared_attr
-    def __tablename__(cls) -> str:
+    def __tablename__(cls) -> str:  # noqa: N805
         """Generate table name from class name."""
         return cls.__name__.lower()
 

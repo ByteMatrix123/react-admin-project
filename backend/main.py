@@ -4,14 +4,19 @@ FastAPI main application.
 
 import logging
 from contextlib import asynccontextmanager
-from datetime import datetime
+from datetime import UTC, datetime
 
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
+from sqlalchemy import text
 
 from app.api.auth import router as auth_router
+from app.api.files import router as files_router
+from app.api.permissions import router as permissions_router
+from app.api.roles import router as roles_router
+from app.api.users import router as users_router
 from app.core.config import settings
 from app.core.redis import close_redis, init_redis
 from app.schemas.common import HealthCheck
@@ -86,17 +91,20 @@ async def global_exception_handler(request: Request, exc: Exception):
 @app.get("/health", response_model=HealthCheck)
 async def health_check():
     """Health check endpoint."""
-    from app.core.database import get_db_session
+    from app.core.database import get_async_session
     from app.core.redis import get_redis
 
     # Check database connection
     db_status = "disconnected"
     try:
-        async with get_db_session() as db:
-            await db.execute("SELECT 1")
-        db_status = "connected"
-    except Exception as e:
-        logger.error(f"Database health check failed: {e}")
+        async for db in get_async_session():
+            result = await db.execute(text("SELECT 1"))
+            if result:
+                db_status = "connected"
+            break
+    except Exception:
+        logger.exception("Database health check failed")
+        db_status = "disconnected"
 
     # Check Redis connection
     redis_status = "disconnected"
@@ -105,14 +113,14 @@ async def health_check():
         if redis:
             await redis.ping()
             redis_status = "connected"
-    except Exception as e:
-        logger.error(f"Redis health check failed: {e}")
+    except Exception:
+        logger.exception("Redis health check failed")
 
     overall_status = "healthy" if db_status == "connected" and redis_status == "connected" else "unhealthy"
 
     return HealthCheck(
         status=overall_status,
-        timestamp=datetime.utcnow().isoformat(),
+        timestamp=datetime.now(UTC).isoformat(),
         version=settings.app_version,
         database=db_status,
         redis=redis_status,
@@ -134,13 +142,6 @@ async def root():
 
 # Include routers
 app.include_router(auth_router, prefix="/api/auth", tags=["Authentication"])
-
-# Import additional routers
-from app.api.files import router as files_router
-from app.api.permissions import router as permissions_router
-from app.api.roles import router as roles_router
-from app.api.users import router as users_router
-
 app.include_router(users_router, prefix="/api/users", tags=["Users"])
 app.include_router(roles_router, prefix="/api/roles", tags=["Roles"])
 app.include_router(permissions_router, prefix="/api/permissions", tags=["Permissions"])

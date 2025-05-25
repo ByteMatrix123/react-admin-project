@@ -2,7 +2,7 @@
 User, Role, and Permission models.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import (
     Boolean,
@@ -25,7 +25,9 @@ user_role_table = Table(
     BaseModel.metadata,
     Column("user_id", Integer, ForeignKey("user.id"), primary_key=True),
     Column("role_id", Integer, ForeignKey("role.id"), primary_key=True),
-    Column("created_at", DateTime, default=datetime.utcnow),
+    Column(
+        "created_at", DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    ),
 )
 
 role_permission_table = Table(
@@ -33,7 +35,9 @@ role_permission_table = Table(
     BaseModel.metadata,
     Column("role_id", Integer, ForeignKey("role.id"), primary_key=True),
     Column("permission_id", Integer, ForeignKey("permission.id"), primary_key=True),
-    Column("created_at", DateTime, default=datetime.utcnow),
+    Column(
+        "created_at", DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    ),
 )
 
 
@@ -71,7 +75,9 @@ class User(BaseModel):
 
     # Authentication
     last_login = Column(DateTime, nullable=True)
-    password_changed_at = Column(DateTime, default=datetime.utcnow)
+    password_changed_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None)
+    )
 
     # Settings
     language = Column(String(10), default="zh-CN", nullable=False)
@@ -161,6 +167,9 @@ class Permission(BaseModel):
         String(50), nullable=False
     )  # e.g., 'create', 'read', 'update', 'delete'
     is_active = Column(Boolean, default=True, nullable=False)
+    is_system = Column(
+        Boolean, default=False, nullable=False
+    )  # System permissions cannot be deleted
 
     # Relationships
     roles = relationship(
@@ -184,7 +193,9 @@ class UserRole(BaseModel):
     user_id = Column(Integer, ForeignKey("user.id"), nullable=False)
     role_id = Column(Integer, ForeignKey("role.id"), nullable=False)
     assigned_by = Column(Integer, ForeignKey("user.id"), nullable=True)
-    assigned_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    assigned_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None), nullable=False
+    )
 
     __table_args__ = (UniqueConstraint("user_id", "role_id", name="_user_role_uc"),)
 
@@ -197,7 +208,9 @@ class RolePermission(BaseModel):
     role_id = Column(Integer, ForeignKey("role.id"), nullable=False)
     permission_id = Column(Integer, ForeignKey("permission.id"), nullable=False)
     assigned_by = Column(Integer, ForeignKey("user.id"), nullable=True)
-    assigned_at = Column(DateTime, default=datetime.utcnow, nullable=False)
+    assigned_at = Column(
+        DateTime, default=lambda: datetime.now(UTC).replace(tzinfo=None), nullable=False
+    )
 
     __table_args__ = (
         UniqueConstraint("role_id", "permission_id", name="_role_permission_uc"),

@@ -2,7 +2,7 @@
 User service for business logic.
 """
 
-from datetime import datetime
+from datetime import UTC, datetime
 
 from sqlalchemy import and_, func, or_, select
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -84,7 +84,7 @@ class UserService:
             return None
 
         # Update fields
-        update_data = user_data.dict(exclude_unset=True)
+        update_data = user_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(user, field, value)
 
@@ -102,7 +102,7 @@ class UserService:
             return None
 
         # Update profile fields
-        update_data = profile_data.dict(exclude_unset=True)
+        update_data = profile_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(user, field, value)
 
@@ -120,7 +120,7 @@ class UserService:
             return None
 
         # Update settings fields
-        update_data = settings_data.dict(exclude_unset=True)
+        update_data = settings_data.model_dump(exclude_unset=True)
         for field, value in update_data.items():
             setattr(user, field, value)
 
@@ -143,7 +143,7 @@ class UserService:
 
         # Update password
         user.hashed_password = get_password_hash(new_password)
-        user.password_changed_at = datetime.utcnow()
+        user.password_changed_at = datetime.now(UTC).replace(tzinfo=None)
 
         await self.db.commit()
         return True
@@ -156,7 +156,7 @@ class UserService:
 
         # Update password
         user.hashed_password = get_password_hash(new_password)
-        user.password_changed_at = datetime.utcnow()
+        user.password_changed_at = datetime.now(UTC).replace(tzinfo=None)
 
         await self.db.commit()
         return True
@@ -195,7 +195,7 @@ class UserService:
         """Update user's last login time."""
         user = await self.get_by_id(user_id)
         if user:
-            user.last_login = datetime.utcnow()
+            user.last_login = datetime.now(UTC).replace(tzinfo=None)
             await self.db.commit()
 
     async def get_users(

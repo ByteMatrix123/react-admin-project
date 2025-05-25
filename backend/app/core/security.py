@@ -2,7 +2,7 @@
 Security utilities for authentication and authorization.
 """
 
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
 from typing import Any
 
 from jose import JWTError, jwt
@@ -19,9 +19,9 @@ def create_access_token(
 ) -> str:
     """Create JWT access token."""
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(
+        expire = datetime.now(UTC) + timedelta(
             minutes=settings.access_token_expire_minutes
         )
 
@@ -37,9 +37,9 @@ def create_refresh_token(
 ) -> str:
     """Create JWT refresh token."""
     if expires_delta:
-        expire = datetime.utcnow() + expires_delta
+        expire = datetime.now(UTC) + expires_delta
     else:
-        expire = datetime.utcnow() + timedelta(days=settings.refresh_token_expire_days)
+        expire = datetime.now(UTC) + timedelta(days=settings.refresh_token_expire_days)
 
     to_encode = {"exp": expire, "sub": str(subject), "type": "refresh"}
     encoded_jwt = jwt.encode(
@@ -61,7 +61,7 @@ def verify_token(token: str, token_type: str = "access") -> str | None:
 
         # Check expiration
         exp = payload.get("exp")
-        if exp is None or datetime.utcnow() > datetime.fromtimestamp(exp):
+        if exp is None or datetime.now(UTC) > datetime.fromtimestamp(exp, tz=UTC):
             return None
 
         subject: str = payload.get("sub")
@@ -83,7 +83,7 @@ def get_password_hash(password: str) -> str:
 def generate_password_reset_token(email: str) -> str:
     """Generate password reset token."""
     delta = timedelta(hours=24)  # Token valid for 24 hours
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expires = now + delta
     exp = expires.timestamp()
     encoded_jwt = jwt.encode(
@@ -113,7 +113,7 @@ def verify_password_reset_token(token: str) -> str | None:
 def generate_email_verification_token(email: str) -> str:
     """Generate email verification token."""
     delta = timedelta(hours=48)  # Token valid for 48 hours
-    now = datetime.utcnow()
+    now = datetime.now(UTC)
     expires = now + delta
     exp = expires.timestamp()
     encoded_jwt = jwt.encode(

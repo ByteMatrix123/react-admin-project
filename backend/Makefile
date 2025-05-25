@@ -47,9 +47,32 @@ check: lint type-check
 test:
 	uv run pytest
 
+# Run specific test modules
+test-simple:
+	uv run pytest tests/test_simple.py -v
+
+test-auth:
+	uv run pytest tests/test_auth.py -v
+
+test-users:
+	uv run pytest tests/test_users.py -v
+
+test-roles:
+	uv run pytest tests/test_roles.py -v
+
+test-permissions:
+	uv run pytest tests/test_permissions.py -v
+
+test-integration:
+	uv run pytest tests/test_integration.py -v
+
 # Run tests with coverage
 test-cov:
 	uv run pytest --cov=app --cov-report=html --cov-report=term
+
+# Run test runner script
+test-runner:
+	python scripts/run_tests.py
 
 # Security checks
 security:
